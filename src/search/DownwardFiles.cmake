@@ -42,46 +42,46 @@ option(
 # plugins are enabled or disabled manually.
 mark_as_advanced(DISABLE_PLUGINS_BY_DEFAULT)
 
-#fast_downward_plugin(
-#    NAME CORE_SOURCES
-#    HELP "Core source files"
-#    SOURCES
-#        planner
-#
-#        abstract_task
-#        axioms
-#        evaluation_context
-#        evaluation_result
-#        evaluator
-#        global_operator
-#        globals
-#        global_state
-#        heuristic_cache
-#        heuristic
-#        open_list
-#        open_list_factory
-#        operator_cost
-#        operator_id
-#        option_parser
-#        option_parser_util
-#        per_state_information
-#        plugin
-#        pruning_method
-#        search_engine
-#        search_node_info
-#        search_progress
-#        search_space
-#        search_statistics
-#        state_id
-#        state_registry
-#        task_proxy
-#
-#    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR SUCCESSOR_GENERATOR TASK_PROPERTIES
-#    CORE_PLUGIN
-#)
-
 fast_downward_plugin(
     NAME CORE_SOURCES
+    HELP "Core source files"
+    SOURCES
+        planner
+
+        abstract_task
+        axioms
+        evaluation_context
+        evaluation_result
+        evaluator
+        global_operator
+        globals
+        global_state
+        heuristic_cache
+        heuristic
+        open_list
+        open_list_factory
+        operator_cost
+        operator_id
+        option_parser
+        option_parser_util
+        per_state_information
+        plugin
+        pruning_method
+        search_engine
+        search_node_info
+        search_progress
+        search_space
+        search_statistics
+        state_id
+        state_registry
+        task_proxy
+
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR SUCCESSOR_GENERATOR TASK_PROPERTIES
+    # CORE_PLUGIN
+)
+
+fast_downward_plugin(
+    NAME EXTERNAL_SEARCH
     HELP "Core External Search source files"
     SOURCES
         planner
@@ -91,7 +91,6 @@ fast_downward_plugin(
         external/global_operator
         globals
         external/node
-        #global_state
         external/heuristic
         open_list
         open_list_factory
@@ -110,8 +109,8 @@ fast_downward_plugin(
         external/state_id
         task_proxy
 
-    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR SUCCESSOR_GENERATOR TASK_PROPERTIES
-    CORE_PLUGIN
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR EXTERNAL_SEARCH_SUCCESSOR_GENERATOR TASK_PROPERTIES
+    ALTERNATE_PLUGIN
 )
 
 
@@ -571,6 +570,15 @@ fast_downward_plugin(
     HELP "Successor generator"
     SOURCES
         task_utils/successor_generator
+    DEPENDS TASK_PROPERTIES
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME EXTERNAL_SEARCH_SUCCESSOR_GENERATOR
+    HELP "External Search successor generator"
+    SOURCES
+        external/task_utils/successor_generator
     DEPENDS TASK_PROPERTIES
     DEPENDENCY_ONLY
 )
