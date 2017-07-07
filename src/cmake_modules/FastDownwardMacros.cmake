@@ -251,8 +251,6 @@ function(fast_downward_plugin)
         set(_OPTION_DEFAULT TRUE)
     elseif(_PLUGIN_DEPENDENCY_ONLY)
       set(_OPTION_DEFAULT FALSE)
-    elseif(_PLUGIN_ALTERNATE_PLUGIN)
-      set(_OPTION_DEFAULT FALSE)
     endif()
 
     option(PLUGIN_${_PLUGIN_NAME}_ENABLED ${_PLUGIN_HELP} ${_OPTION_DEFAULT})

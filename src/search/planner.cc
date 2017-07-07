@@ -4,12 +4,21 @@
 #include "utils/system.h"
 #include "utils/timer.h"
 
+
 #include <iostream>
 
 using namespace std;
 using utils::ExitCode;
 
 int main(int argc, const char **argv) {
+
+#ifdef EXTERNAL_SEARCH
+std::cout << "EXTERNAL_SEARCH is defined " << std::endl;
+#endif
+
+#ifndef EXTERNAL_SEARCH
+std::cout << "EXTERNAL SEARCH is not defined" << std::endl;
+#endif
     utils::register_event_handlers();
 
     if (argc < 2) {

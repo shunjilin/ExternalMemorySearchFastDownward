@@ -77,41 +77,42 @@ fast_downward_plugin(
         task_proxy
 
     DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR SUCCESSOR_GENERATOR TASK_PROPERTIES
-    # CORE_PLUGIN
+    CORE_PLUGIN
 )
 
-fast_downward_plugin(
-    NAME EXTERNAL_SEARCH
-    HELP "Core External Search source files"
-    SOURCES
-        planner
-        abstract_task
-        axioms
-        external/evaluator
-        external/global_operator
-        globals
-        external/node
-        external/heuristic
-        open_list
-        open_list_factory
-        operator_cost
-        operator_id
-        option_parser
-        option_parser_util
-        per_state_information
-        plugin
-        pruning_method
-        search_engine
-        search_node_info
-        search_progress
-        search_space
-        search_statistics
-        external/state_id
-        task_proxy
-
-    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR EXTERNAL_SEARCH_SUCCESSOR_GENERATOR TASK_PROPERTIES
-    ALTERNATE_PLUGIN
-)
+#fast_downward_plugin(
+#    NAME EXTERNAL_SEARCH_SOURCES
+#    HELP "External Search source files"
+#    SOURCES
+#        planner
+#        abstract_task
+#        axioms
+#        external/evaluator
+#        external/global_operator
+#        external/global_state
+#        globals
+#        external/node
+#        external/heuristic
+#        open_list
+#        open_list_factory
+#        operator_cost
+#        operator_id
+#        option_parser
+#        option_parser_util
+#        per_state_information
+#        plugin
+#        pruning_method
+#        search_engine
+#        search_node_info
+#        search_progress
+#        search_space
+#        search_statistics
+#        external/state_id
+#        task_proxy
+#
+#    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR EXTERNAL_SEARCH_SUCCESSOR_GENERATOR TASK_PROPERTIES
+#    DEPENDENCY_ONLY
+#)
 
 
 

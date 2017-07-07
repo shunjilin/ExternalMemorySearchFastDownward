@@ -1,3 +1,5 @@
+# Not sure why EXTERNAL_SEARCH_ENABLED is set to TRUE by default
+
 release32 = ["-DCMAKE_BUILD_TYPE=Release"]
 debug32 = ["-DCMAKE_BUILD_TYPE=Debug"]
 release32nolp = ["-DCMAKE_BUILD_TYPE=Release", "-DUSE_LP=NO"]
@@ -22,7 +24,8 @@ externalsearch64 = ["-DCMAKE_BUILD_TYPE=Release",
                     "-DALLOW_64_BIT=True", "-DCMAKE_CXX_FLAGS='-m64'",
                     "-DPLUGIN_CORE_SOURCES_ENABLED=FALSE",
                     "-DDISABLE_PLUGINS_BY_DEFAULT=YES",
-                    "-DPLUGIN_EXTERNAL_SEARCH_ENABLED=TRUE",
+                    "-DPLUGIN_EXTERNAL_SEARCH_SOURCES_ENABLED=TRUE",
+                    "-DEXTERNAL_SEARCH_ENABLED=TRUE"
                     ]
 
 DEFAULT = "release64"

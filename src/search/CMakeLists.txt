@@ -72,3 +72,7 @@ if(PLUGIN_LP_SOLVER_ENABLED AND USE_LP)
         )
     endif()
 endif()
+
+if(EXTERNAL_SEARCH_ENABLED)
+  add_definitions("-D EXTERNAL_SEARCH")
+endif()
