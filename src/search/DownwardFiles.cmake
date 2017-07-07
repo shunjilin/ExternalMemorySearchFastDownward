@@ -47,7 +47,6 @@ fast_downward_plugin(
     HELP "Core source files"
     SOURCES
         planner
-
         abstract_task
         axioms
         evaluation_context
@@ -80,39 +79,42 @@ fast_downward_plugin(
     CORE_PLUGIN
 )
 
-#fast_downward_plugin(
-#    NAME EXTERNAL_SEARCH_SOURCES
-#    HELP "External Search source files"
-#    SOURCES
-#        planner
-#        abstract_task
-#        axioms
-#        external/evaluator
-#        external/global_operator
-#        external/global_state
-#        globals
-#        external/node
-#        external/heuristic
-#        open_list
-#        open_list_factory
-#        operator_cost
-#        operator_id
-#        option_parser
-#        option_parser_util
-#        per_state_information
-#        plugin
-#        pruning_method
-#        search_engine
-#        search_node_info
-#        search_progress
-#        search_space
-#        search_statistics
-#        external/state_id
-#        task_proxy
-#
-#    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR EXTERNAL_SEARCH_SUCCESSOR_GENERATOR TASK_PROPERTIES
-#    DEPENDENCY_ONLY
-#)
+fast_downward_plugin(
+    NAME EXTERNAL_SEARCH_SOURCES
+    HELP "External Search source files"
+    SOURCES
+        planner
+        abstract_task
+        axioms
+        evaluation_context
+        evaluation_result
+        evaluator
+        global_operator
+        globals
+        global_state
+        heuristic_cache
+        heuristic
+        open_list
+        open_list_factory
+        operator_cost
+        operator_id
+        option_parser
+        option_parser_util
+        per_state_information
+        plugin
+        pruning_method
+        search_engine
+        search_node_info
+        search_progress
+        search_space
+        search_statistics
+        state_id
+        state_registry
+        task_proxy
+
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR SUCCESSOR_GENERATOR TASK_PROPERTIES
+    DEPENDENCY_ONLY
+)
 
 
 
@@ -571,15 +573,6 @@ fast_downward_plugin(
     HELP "Successor generator"
     SOURCES
         task_utils/successor_generator
-    DEPENDS TASK_PROPERTIES
-    DEPENDENCY_ONLY
-)
-
-fast_downward_plugin(
-    NAME EXTERNAL_SEARCH_SUCCESSOR_GENERATOR
-    HELP "External Search successor generator"
-    SOURCES
-        external/task_utils/successor_generator
     DEPENDS TASK_PROPERTIES
     DEPENDENCY_ONLY
 )
