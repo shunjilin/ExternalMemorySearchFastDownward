@@ -1,6 +1,8 @@
 #ifndef SEARCH_STATISTICS_H
 #define SEARCH_STATISTICS_H
 
+#include <cstddef>
+
 /*
   This class keeps track of search statistics.
 
@@ -11,21 +13,21 @@
 
 class SearchStatistics {
     // General statistics
-    int expanded_states;  // no states for which successors were generated
-    int evaluated_states; // no states for which h fn was computed
-    int evaluations;      // no of heuristic evaluations performed
-    int generated_states; // no states created in total (plus those removed since already in close list)
-    int reopened_states;  // no of *closed* states which we reopened
-    int dead_end_states;
+    size_t expanded_states;  // no states for which successors were generated
+    size_t evaluated_states; // no states for which h fn was computed
+    size_t evaluations;      // no of heuristic evaluations performed
+    size_t generated_states; // no states created in total (plus those removed since already in close list)
+    size_t reopened_states;  // no of *closed* states which we reopened
+    size_t dead_end_states;
 
-    int generated_ops;    // no of operators that were returned as applicable
+    size_t generated_ops;    // no of operators that were returned as applicable
 
     // Statistics related to f values
     int lastjump_f_value; //f value obtained in the last jump
-    int lastjump_expanded_states; // same guy but at point where the last jump in the open list
-    int lastjump_reopened_states; // occurred (jump == f-value of the first node in the queue increases)
-    int lastjump_evaluated_states;
-    int lastjump_generated_states;
+    size_t lastjump_expanded_states; // same guy but at posize_t where the last jump in the open list
+    size_t lastjump_reopened_states; // occurred (jump == f-value of the first node in the queue increases)
+    size_t lastjump_evaluated_states;
+    size_t lastjump_generated_states;
 
     void print_f_line() const;
 public:
@@ -33,26 +35,26 @@ public:
     ~SearchStatistics() = default;
 
     // Methods that update statistics.
-    void inc_expanded(int inc = 1) {expanded_states += inc; }
-    void inc_evaluated_states(int inc = 1) {evaluated_states += inc; }
-    void inc_generated(int inc = 1) {generated_states += inc; }
-    void inc_reopened(int inc = 1) {reopened_states += inc; }
-    void inc_generated_ops(int inc = 1) {generated_ops += inc; }
-    void inc_evaluations(int inc = 1) {evaluations += inc; }
-    void inc_dead_ends(int inc = 1) {dead_end_states += inc; }
+    void inc_expanded(size_t inc = 1) {expanded_states += inc; }
+    void inc_evaluated_states(size_t inc = 1) {evaluated_states += inc; }
+    void inc_generated(size_t inc = 1) {generated_states += inc; }
+    void inc_reopened(size_t inc = 1) {reopened_states += inc; }
+    void inc_generated_ops(size_t inc = 1) {generated_ops += inc; }
+    void inc_evaluations(size_t inc = 1) {evaluations += inc; }
+    void inc_dead_ends(size_t inc = 1) {dead_end_states += inc; }
 
     // Methods that access statistics.
-    int get_expanded() const {return expanded_states; }
-    int get_evaluated_states() const {return evaluated_states; }
-    int get_evaluations() const {return evaluations; }
-    int get_generated() const {return generated_states; }
-    int get_reopened() const {return reopened_states; }
-    int get_generated_ops() const {return generated_ops; }
+    size_t get_expanded() const {return expanded_states; }
+    size_t get_evaluated_states() const {return evaluated_states; }
+    size_t get_evaluations() const {return evaluations; }
+    size_t get_generated() const {return generated_states; }
+    size_t get_reopened() const {return reopened_states; }
+    size_t get_generated_ops() const {return generated_ops; }
 
     /*
       Call the following method with the f value of every expanded
       state. It will notice "jumps" (i.e., when the expanded f value
-      is the highest f value encountered so far), print some
+      is the highest f value encountered so far), print_t some
       statistics on jumps, and keep track of expansions etc. up to the
       last jump.
 
