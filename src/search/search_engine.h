@@ -3,12 +3,21 @@
 
 #include "global_operator.h"
 #include "operator_cost.h"
-#include "search_progress.h"
+
 #include "search_space.h"
+
 #include "search_statistics.h"
+
+#ifndef EXTERNAL_SEARCH
+#include "search_progress.h"
+#endif
 #include "state_registry.h"
 
 #include <vector>
+
+#ifdef EXTERNAL_SEARCH
+class EvaluationContext;
+#endif
 
 class Heuristic;
 
@@ -34,7 +43,9 @@ private:
 protected:
     StateRegistry state_registry;
     SearchSpace search_space;
+#ifndef EXTERNAL_SEARCH
     SearchProgress search_progress;
+#endif
     SearchStatistics statistics;
     int bound;
     OperatorCost cost_type;
@@ -51,6 +62,7 @@ public:
     virtual ~SearchEngine();
     virtual void print_statistics() const;
     virtual void save_plan_if_necessary() const;
+
     bool found_solution() const;
     SearchStatus get_status() const;
     const Plan &get_plan() const;
@@ -69,7 +81,9 @@ public:
 /*
   Print heuristic values of all heuristics evaluated in the evaluation context.
 */
+#ifndef EXTERNAL_SEARCH
 extern void print_initial_h_values(const EvaluationContext &eval_context);
+#endif
 
 extern ordered_set::OrderedSet<OperatorID> collect_preferred_operators(
     EvaluationContext &eval_context,

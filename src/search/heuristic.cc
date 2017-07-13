@@ -2,6 +2,7 @@
 
 #include "evaluation_context.h"
 #include "evaluation_result.h"
+
 #include "global_operator.h"
 #include "globals.h"
 #include "option_parser.h"
@@ -18,8 +19,10 @@ using namespace std;
 
 Heuristic::Heuristic(const Options &opts)
     : description(opts.get_unparsed_config()),
+#ifndef EXTERNAL_SEARCH
       heuristic_cache(HEntry(NO_VALUE, true)), //TODO: is true really a good idea here?
       cache_h_values(opts.get<bool>("cache_estimates")),
+#endif
       task(opts.get<shared_ptr<AbstractTask>>("transform")),
       task_proxy(*task) {
 }
@@ -49,7 +52,9 @@ void Heuristic::add_options_to_parser(OptionParser &parser) {
         "Optional task transformation for the heuristic."
         " Currently, adapt_costs() and no_transform() are available.",
         "no_transform()");
+#ifndef EXTERNAL_SEARCH
     parser.add_option<bool>("cache_estimates", "cache heuristic estimates", "true");
+#endif
 }
 
 // This solution to get default values seems nonoptimal.
@@ -66,11 +71,16 @@ EvaluationResult Heuristic::compute_result(EvaluationContext &eval_context) {
 
     assert(preferred_operators.empty());
 
-    const GlobalState &state = eval_context.get_state();
+    const GlobalState &state = eval_context.get_state(); 
+#ifndef EXTERNAL_SEARCH
     bool calculate_preferred = eval_context.get_calculate_preferred();
+#endif
 
     int heuristic = NO_VALUE;
-
+#ifdef EXTERNAL_SEARCH
+heuristic = compute_heuristic(state);
+result.set_count_evaluation(true);
+#else
     if (!calculate_preferred && cache_h_values &&
         heuristic_cache[state].h != NO_VALUE && !heuristic_cache[state].dirty) {
         heuristic = heuristic_cache[state].h;
@@ -82,6 +92,7 @@ EvaluationResult Heuristic::compute_result(EvaluationContext &eval_context) {
         }
         result.set_count_evaluation(true);
     }
+#endif
 
     assert(heuristic == DEAD_END || heuristic >= 0);
 

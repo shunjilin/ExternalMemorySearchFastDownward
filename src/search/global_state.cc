@@ -1,3 +1,46 @@
+#ifdef EXTERNAL_SEARCH
+#include "global_state.h"
+#include "globals.h"
+#include "algorithms/int_packer.h"
+
+#include <vector>
+#include <cassert>
+
+using PackedStateBin = int_packer::IntPacker::Bin;
+
+GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState)
+    : packedState(packedState) {
+}
+    
+std::vector<int> GlobalState::get_values() const {
+    int num_variables = g_initial_state_data.size();
+    std::vector<int> values(num_variables);
+    for (int var = 0; var < num_variables; ++var)
+        values[var] = (*this)[var];
+    return values;
+}
+
+
+int GlobalState::operator[](int var) const {
+    assert(var >= 0);
+    assert(var < g_initial_state_data.size());
+    return g_state_packer->get(&(packedState[0]), var);
+}
+
+bool GlobalState::operator==(const GlobalState& other) const {
+    return packedState == other.get_packed_vec();
+}
+
+const std::vector<PackedStateBin> &GlobalState::get_packed_vec() const {
+    return packedState;
+}
+
+int GlobalState::get_g() const {
+    return info.g;
+}
+
+#else // ifndef EXTERNAL_SEARCH
+
 #include "global_state.h"
 
 #include "globals.h"
@@ -42,3 +85,5 @@ void GlobalState::dump_fdr() const {
     State state(registry->get_task(), get_values());
     state.dump_fdr();
 }
+
+#endif

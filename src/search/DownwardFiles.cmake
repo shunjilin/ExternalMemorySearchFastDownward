@@ -92,7 +92,7 @@ fast_downward_plugin(
         global_operator
         globals
         global_state
-        heuristic_cache
+        #heuristic_cache
         heuristic
         open_list
         open_list_factory
@@ -100,23 +100,76 @@ fast_downward_plugin(
         operator_id
         option_parser
         option_parser_util
-        per_state_information
+        #per_state_information
         plugin
         pruning_method
         search_engine
         search_node_info
-        search_progress
+        #search_progress
         search_space
         search_statistics
         state_id
         state_registry
         task_proxy
 
-    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SEGMENTED_VECTOR SUCCESSOR_GENERATOR TASK_PROPERTIES
+        # move these to another plugin
+        #external/open_lists/external_tiebreaking_open_list
+        external/closed_list
+        external/closed_list_factory
+        #external/closed_lists/compress_closed_list
+        #external/search_engines/lazy_search
+        
+
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES MAS_HEURISTIC PLUGIN_SSD_ASTAR
+    DEPENDENCY_ONLY
+)
+
+# START OF EXTERNAL SEARCH PLUGINS
+fast_downward_plugin(
+    NAME PLUGIN_SSD_ASTAR
+    HELP "SSD-based A* search (lazy)"
+    SOURCES
+        external/search_engines/plugin_ssd_astar
+    DEPENDS EXTERNAL_LAZY_SEARCH EXTERNAL_SEARCH_COMMON
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME EXTERNAL_SEARCH_COMMON
+    HELP "Basic classes used for all external search engines"
+    SOURCES
+        search_engines/search_common
+    DEPENDS G_EVALUATOR SUM_EVALUATOR EXTERNAL_TIEBREAKING_OPEN_LIST COMPRESS_CLOSED_LIST WEIGHTED_EVALUATOR
     DEPENDENCY_ONLY
 )
 
 
+fast_downward_plugin(
+    NAME EXTERNAL_TIEBREAKING_OPEN_LIST
+    HELP "External tiebreaking open list"
+    SOURCES
+        external/open_lists/external_tiebreaking_open_list
+    DEPENDENCY_ONLY
+)
+
+  
+fast_downward_plugin(
+    NAME EXTERNAL_LAZY_SEARCH
+    HELP "Lazy external search algorithm"
+    SOURCES
+        external/search_engines/lazy_search
+    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+  NAME COMPRESS_CLOSED_LIST
+  HELP "Compress closed list"
+  SOURCES
+      external/closed_lists/compress_closed_list
+  DEPENDENCY ONLY
+)
+# END OF EXTERNAL SEARCH PLUGINS
 
 fast_downward_plugin(
     NAME OPTIONS

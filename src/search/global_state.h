@@ -1,6 +1,45 @@
 #ifndef GLOBAL_STATE_H
 #define GLOBAL_STATE_H
 
+#ifdef EXTERNAL_SEARCH
+
+#include "algorithms/int_packer.h"
+#include "search_node_info.h"
+#include <vector>
+
+using PackedStateBin = int_packer::IntPacker::Bin;
+
+// GlobalState IS a node for external search purposes
+class GlobalState {
+    std::vector<PackedStateBin> packedState;
+    SearchNodeInfo info;
+ public:
+    GlobalState() = default;
+    GlobalState(const std::vector<PackedStateBin> &packedState);
+    std::vector<int> get_values() const;
+    int operator[](int var) const;
+    bool operator==(const GlobalState &other) const;
+    const std::vector<PackedStateBin> &get_packed_vec() const;
+
+    int get_g() const;
+
+};
+
+namespace std {
+    template<> struct hash<GlobalState> {
+        size_t operator()(const GlobalState &state) const {
+            auto &vec = state.get_packed_vec();
+            std::size_t seed = vec.size();
+            for (auto& i : vec ) {
+                seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+            return seed;
+        }
+    };
+}
+
+#else // ifndef EXTERNAL_SEARCH
+
 #include "state_id.h"
 
 #include "algorithms/int_packer.h"
@@ -54,5 +93,6 @@ public:
     void dump_fdr() const;
 };
 
+#endif // ifdef EXTERNAL_SEARCH
 
-#endif
+#endif // GLOBAL_STATE_H

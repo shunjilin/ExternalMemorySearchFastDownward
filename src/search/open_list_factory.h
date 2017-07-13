@@ -14,8 +14,9 @@ public:
     OpenListFactory(const OpenListFactory &) = delete;
 
     virtual std::unique_ptr<StateOpenList> create_state_open_list() = 0;
+#ifndef EXTERNAL_SEARCH
     virtual std::unique_ptr<EdgeOpenList> create_edge_open_list() = 0;
-
+#endif
     /*
       The following template receives manual specializations (in the
       cc file) for the open list types we want to support. It is

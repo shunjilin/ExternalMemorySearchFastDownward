@@ -1,4 +1,8 @@
+#ifdef EXTERNAL_SEARCH
+#include "../external/search_engines/lazy_search.h"
+#else
 #include "lazy_search.h"
+#endif
 #include "search_common.h"
 
 #include "../option_parser.h"

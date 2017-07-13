@@ -1,3 +1,75 @@
+#ifdef EXTERNAL_SEARCH
+
+#include "state_registry.h"
+#include "abstract_task.h"
+#include "axioms.h"
+#include "algorithms/int_packer.h"
+#include "global_operator.h"
+#include "global_state.h"
+
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+StateRegistry::StateRegistry(
+    const AbstractTask &task, const int_packer::IntPacker &state_packer,
+    AxiomEvaluator &axiom_evaluator, const std::vector<int> &initial_state_data)
+    : task(task),
+      state_packer(state_packer),
+      axiom_evaluator(axiom_evaluator),
+      initial_state_data(initial_state_data),
+      num_variables(initial_state_data.size()) {
+}
+
+
+int StateRegistry::get_bins_per_state() const {
+    return state_packer.get_num_bins();
+}
+
+const AbstractTask &StateRegistry::get_task() const {
+    return task;
+}
+
+int StateRegistry::get_num_variables() const {
+    return num_variables;
+}
+
+int StateRegistry::get_state_value(const PackedStateBin *buffer, int var) const {
+    return state_packer.get(buffer, var);
+}
+
+const GlobalState StateRegistry::get_initial_state() {
+    std::vector<PackedStateBin> buffer(get_bins_per_state(), 0);
+    // Avoid garbage values in half-full bins.
+    fill_n(&buffer[0], get_bins_per_state(), 0);
+    for (size_t i = 0; i < initial_state_data.size(); ++i) {
+        state_packer.set(&buffer[0], i, initial_state_data[i]);
+    }
+    axiom_evaluator.evaluate(&buffer[0], state_packer);
+    return GlobalState(buffer); // SHUNJI TODO: implement this.
+}
+    
+    
+GlobalState StateRegistry::
+get_successor_state(const GlobalState &predecessor, const GlobalOperator &op) {
+    assert(!op.is_axiom());
+    std::vector<PackedStateBin> buffer(predecessor.get_packed_vec()); // SHUNJI TODO: implement this
+    for (size_t i = 0; i < op.get_effects().size(); ++i) {
+        const GlobalEffect &effect = op.get_effects()[i];
+        if (effect.does_fire(predecessor))
+            state_packer.set(&buffer[0], effect.var, effect.val);
+    }
+    axiom_evaluator.evaluate(&buffer[0], state_packer);
+    return GlobalState(buffer); // SHUNJI TODO: implement this.
+}
+
+int StateRegistry::get_state_size_in_bytes() const {
+    return get_bins_per_state() * sizeof(PackedStateBin);
+}
+
+#else // ifndef EXTERNAL_SEARCH
+
 #include "state_registry.h"
 
 #include "global_operator.h"
@@ -101,3 +173,5 @@ void StateRegistry::subscribe(PerStateInformationBase *psi) const {
 void StateRegistry::unsubscribe(PerStateInformationBase *const psi) const {
     subscribers.erase(psi);
 }
+
+#endif // ifdef EXTERNAL_SEARCH

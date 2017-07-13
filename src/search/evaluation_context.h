@@ -2,7 +2,11 @@
 #define EVALUATION_CONTEXT_H
 
 #include "evaluation_result.h"
+#ifdef EXTERNAL_SEARCH
+#include "heuristic.h"
+#else
 #include "heuristic_cache.h"
+#endif
 #include "operator_id.h"
 
 #include <unordered_map>
@@ -47,15 +51,25 @@ class SearchStatistics;
 */
 
 class EvaluationContext {
+#ifdef EXTERNAL_SEARCH
+    const GlobalState &state;
+#else
     HeuristicCache cache;
+#endif
     int g_value;
     bool preferred;
     SearchStatistics *statistics;
     bool calculate_preferred;
-
     static const int INVALID = -1;
 
 public:
+
+#ifdef EXTERNAL_SEARCH
+    EvaluationContext(const GlobalState &state,
+                      int g_value, bool is_preferred,
+                      SearchStatistics *statistics,
+                      bool calculate_preferred = false);
+#else
     /*
       Copy existing heuristic cache and use it to look up heuristic values.
       Used for example by lazy search.
@@ -87,14 +101,21 @@ public:
     EvaluationContext(
         const GlobalState &state,
         SearchStatistics *statistics = nullptr, bool calculate_preferred = false);
+#endif
 
     ~EvaluationContext() = default;
-
-    const EvaluationResult &get_result(Evaluator *heur);
+    
+#ifndef EXTERNAL_SEARCH
     const HeuristicCache &get_cache() const;
+#endif
     const GlobalState &get_state() const;
-    int get_g_value() const;
     bool is_preferred() const;
+#ifdef EXTERNAL_SEARCH
+    EvaluationResult get_result(Evaluator *heur);
+#else
+    const EvaluationResult &get_result(Evaluator *heur);
+#endif
+    int get_g_value() const;
 
     /*
       Use get_heuristic_value() to query finite heuristic values. It
@@ -110,6 +131,7 @@ public:
     bool is_heuristic_infinite(Evaluator *heur);
     int get_heuristic_value(Evaluator *heur);
     int get_heuristic_value_or_infinity(Evaluator *heur);
+
     const std::vector<OperatorID> &get_preferred_operators(
         Evaluator *heur);
     bool get_calculate_preferred() const;

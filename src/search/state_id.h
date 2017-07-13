@@ -7,11 +7,14 @@
 // states see the file state_registry.h.
 
 class StateID {
+    #ifndef EXTERNAL_SEARCH
     friend class StateRegistry;
-    friend std::ostream &operator<<(std::ostream &os, StateID id);
     template<typename>
     friend class PerStateInformation;
+    #endif
 
+    friend std::ostream &operator<<(std::ostream &os, StateID id);
+    
     int value;
     explicit StateID(int value_)
         : value(value_) {

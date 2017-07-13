@@ -7,9 +7,16 @@
 #include "../evaluators/sum_evaluator.h"
 #include "../evaluators/weighted_evaluator.h"
 
+#ifdef EXTERNAL_SEARCH
+#include "../external/closed_list_factory.h"
+#include "../external/closed_lists/compress_closed_list.h"
+#include "../external/open_lists/external_tiebreaking_open_list.h"
+#include <tuple>
+#else
 #include "../open_lists/alternation_open_list.h"
 #include "../open_lists/standard_scalar_open_list.h"
 #include "../open_lists/tiebreaking_open_list.h"
+#endif
 
 #include <memory>
 
@@ -20,6 +27,31 @@ using GEval = g_evaluator::GEvaluator;
 using SumEval = sum_evaluator::SumEvaluator;
 using WeightedEval = weighted_evaluator::WeightedEvaluator;
 
+#ifdef EXTERNAL_SEARCH
+    // SHUNJI TODO: give better name? includes specialization for compress
+    tuple<shared_ptr<OpenListFactory>, shared_ptr<ClosedListFactory>, Evaluator *>
+    create_astar_open_list_factory_closed_list_factory_and_f_eval(const options::Options &opts) {
+            GEval *g = new GEval();
+            Evaluator *h = opts.get<Evaluator *>("eval");
+            Evaluator *f = new SumEval(vector<Evaluator *>({g, h}));
+            vector<Evaluator *> evals = {f, h};
+
+            Options options;
+            options.set("evals", evals);
+            options.set("pref_only", false);
+            options.set("unsafe_pruning", false);
+            options.set("reopen_closed", true);
+            shared_ptr<OpenListFactory> open =
+                make_shared<external_tiebreaking_open_list::
+                            ExternalTieBreakingOpenListFactory>(options);
+            shared_ptr<ClosedListFactory> closed =
+                make_shared<compress_closed_list::
+                            CompressClosedListFactory>(options);
+            return make_tuple(open, closed, f);
+    }
+    
+#else
+    
 shared_ptr<OpenListFactory> create_standard_scalar_open_list_factory(
     Evaluator *eval, bool pref_only) {
     Options options;
@@ -124,4 +156,5 @@ create_astar_open_list_factory_and_f_eval(const Options &opts) {
         make_shared<tiebreaking_open_list::TieBreakingOpenListFactory>(options);
     return make_pair(open, f);
 }
+#endif // ifdef EXTERNAL_SEARCH    
 }

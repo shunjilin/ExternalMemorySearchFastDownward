@@ -1,3 +1,10 @@
 *~
 /builds/
 .hg*
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+sas*
+[#]*[#]
+sas_plan

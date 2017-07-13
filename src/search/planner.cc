@@ -1,5 +1,6 @@
 #include "option_parser.h"
 #include "search_engine.h"
+#include "globals.h"
 
 #include "utils/system.h"
 #include "utils/timer.h"

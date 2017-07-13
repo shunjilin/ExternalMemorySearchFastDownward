@@ -20,7 +20,8 @@ using namespace std;
 using utils::ExitCode;
 
 class PruningMethod;
-
+// SHUNJI TODO: move state registry functions into search space?
+// restore state space
 SearchEngine::SearchEngine(const Options &opts)
     : status(IN_PROGRESS),
       solution_found(false),
@@ -39,11 +40,11 @@ SearchEngine::SearchEngine(const Options &opts)
 
 SearchEngine::~SearchEngine() {
 }
-
+                                                                                                                                         
 void SearchEngine::print_statistics() const {
     cout << "Bytes per state: "
          << state_registry.get_state_size_in_bytes() << endl;
-}
+}                                                       
 
 bool SearchEngine::found_solution() const {
     return solution_found;
@@ -83,7 +84,12 @@ bool SearchEngine::check_goal_and_set_plan(const GlobalState &state) {
     if (test_goal(state)) {
         cout << "Solution found!" << endl;
         Plan plan;
+#ifdef EXTERNAL_SEARCH
+        // SHUNJI TODO: implement virtual function for trace_path
+        std::cerr << "TRACE PATH NOT IMPLEMENTED" << std::endl;
+#else
         search_space.trace_path(state, plan);
+#endif
         set_plan(plan);
         return true;
     }
@@ -150,6 +156,7 @@ void SearchEngine::add_succ_order_options(OptionParser &parser) {
     utils::add_rng_options(parser);
 }
 
+#ifndef EXTERNAL_SEARCH
 void print_initial_h_values(const EvaluationContext &eval_context) {
     eval_context.get_cache().for_each_heuristic_value(
         [] (const Heuristic *heur, const EvaluationResult &result) {
@@ -163,6 +170,7 @@ void print_initial_h_values(const EvaluationContext &eval_context) {
     }
         );
 }
+#endif
 
 
 static PluginTypePlugin<SearchEngine> _type_plugin(

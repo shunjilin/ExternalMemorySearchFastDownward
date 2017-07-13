@@ -8,7 +8,18 @@
 
 using namespace std;
 
-
+#ifdef EXTERNAL_SEARCH
+EvaluationContext::EvaluationContext(const GlobalState &state,
+                                     int g_value, bool is_preferred,
+                                     SearchStatistics *statistics,
+                                     bool calculate_preferred)
+    : state(state),
+      g_value(g_value),
+      preferred(is_preferred),
+      statistics(statistics),
+      calculate_preferred(calculate_preferred) {
+}
+#else
 EvaluationContext::EvaluationContext(
     const HeuristicCache &cache, int g_value, bool is_preferred,
     SearchStatistics *statistics, bool calculate_preferred)
@@ -30,7 +41,21 @@ EvaluationContext::EvaluationContext(
     SearchStatistics *statistics, bool calculate_preferred)
     : EvaluationContext(HeuristicCache(state), INVALID, false, statistics, calculate_preferred) {
 }
+#endif
 
+#ifdef EXTERNAL_SEARCH
+EvaluationResult EvaluationContext::get_result(Evaluator *heur) {
+    EvaluationResult result = heur->compute_result(*this);
+    if (statistics && dynamic_cast<const Heuristic *>(heur)) {
+        /* Only count evaluations of actual Heuristics, not arbitrary
+           evaluators. */
+        if (result.get_count_evaluation()) {
+            statistics->inc_evaluations();
+        }
+    }
+    return result;
+}
+#else
 const EvaluationResult &EvaluationContext::get_result(Evaluator *heur) {
     EvaluationResult &result = cache[heur];
     if (result.is_uninitialized()) {
@@ -45,7 +70,13 @@ const EvaluationResult &EvaluationContext::get_result(Evaluator *heur) {
     }
     return result;
 }
+#endif
 
+#ifdef EXTERNAL_SEARCH
+const GlobalState &EvaluationContext::get_state() const {
+    return state;
+}
+#else
 const HeuristicCache &EvaluationContext::get_cache() const {
     return cache;
 }
@@ -53,15 +84,16 @@ const HeuristicCache &EvaluationContext::get_cache() const {
 const GlobalState &EvaluationContext::get_state() const {
     return cache.get_state();
 }
-
-int EvaluationContext::get_g_value() const {
-    assert(g_value != INVALID);
-    return g_value;
-}
+#endif
 
 bool EvaluationContext::is_preferred() const {
     assert(g_value != INVALID);
     return preferred;
+}
+ 
+int EvaluationContext::get_g_value() const {
+    assert(g_value != INVALID);
+    return g_value;
 }
 
 bool EvaluationContext::is_heuristic_infinite(Evaluator *heur) {

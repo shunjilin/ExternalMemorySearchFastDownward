@@ -1,6 +1,36 @@
 #ifndef SEARCH_SPACE_H
 #define SEARCH_SPACE_H
 
+#ifdef EXTERNAL_SEARCH
+
+#include "operator_cost.h"
+#include "state_registry.h"
+
+#include <vector>
+
+//class GlobalOperator
+//class GlobalState;
+
+class SearchSpace {
+    StateRegistry &state_registry;
+    OperatorCost cost_type; // what is this for?
+
+ public:
+    SearchSpace(StateRegistry &state_registry,
+                OperatorCost cost_type);
+    
+    // trace_path should be moved to search_engine for external search
+    /*
+    void trace_path(const GlobalState &goal_state,
+                    std::vector<const GlobalOperator *> &path) const;
+    */
+    
+ 
+    
+};
+
+#else // ifndef EXTERNAL_SEARCH
+
 #include "global_state.h"
 #include "operator_cost.h"
 #include "per_state_information.h"
@@ -66,4 +96,6 @@ public:
     void print_statistics() const;
 };
 
-#endif
+#endif // ifdef EXTERNAL_SEARCH
+
+#endif // SEARCH_SPACE_H

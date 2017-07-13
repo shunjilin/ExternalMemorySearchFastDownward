@@ -32,8 +32,8 @@ public:
       (There is also one "illegitimate" use, the remaining reference
       to heuristics[0] in EagerSearch.)
     */
+    
     virtual void get_involved_heuristics(std::set<Heuristic *> &hset) = 0;
-
     /*
       compute_result should compute the estimate and possibly
       preferred operators for the given evaluation context and return

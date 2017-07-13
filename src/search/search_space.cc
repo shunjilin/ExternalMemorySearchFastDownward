@@ -1,3 +1,19 @@
+#ifdef EXTERNAL_SEARCH
+
+#include "search_space.h"
+#include "state_registry.h"
+#include "operator_cost.h"
+
+#include <vector>
+
+SearchSpace::SearchSpace(StateRegistry &state_registry,
+                         OperatorCost cost_type)
+    : state_registry(state_registry),
+      cost_type(cost_type) {
+      }
+
+#else // ifndef EXTERNAL_SEARCH
+
 #include "search_space.h"
 
 #include "global_operator.h"
@@ -163,3 +179,5 @@ void SearchSpace::print_statistics() const {
     cout << "Number of registered states: "
          << state_registry.size() << endl;
 }
+
+#endif

@@ -1,6 +1,50 @@
 #ifndef STATE_REGISTRY_H
 #define STATE_REGISTRY_H
 
+#ifdef EXTERNAL_SEARCH
+
+#include "abstract_task.h"
+#include "axioms.h"
+#include "algorithms/int_packer.h"
+#include "global_operator.h"
+#include "global_state.h"
+
+#include <vector>
+
+/* Not actually a state registry, but used in order to maintain compatibility
+   with original Fast Downward. For external search, perhaps can subsume state
+   registry into search space once dependencies on state registry are resolved,
+   e.g. root task.
+*/
+
+
+class StateRegistry {
+    const AbstractTask &task;
+    const int_packer::IntPacker &state_packer;
+    AxiomEvaluator &axiom_evaluator;
+    const std::vector<int> &initial_state_data;
+    const int num_variables;
+    
+    int get_bins_per_state() const;
+ public:
+    StateRegistry(
+        const AbstractTask &task,
+        const int_packer::IntPacker &state_packer,
+        AxiomEvaluator &axiom_evaluator,
+        const std::vector<int> &initial_state_data);
+    
+    const AbstractTask &get_task() const;
+    int get_num_variables() const;
+    int get_state_value(const PackedStateBin *buffer, int var) const;
+    const GlobalState get_initial_state();
+    GlobalState get_successor_state(const GlobalState &predecessor,
+                                    const GlobalOperator &op);
+    int get_state_size_in_bytes() const;
+};
+
+#else // ifndef EXTERNAL_SEARCH
+
+
 #include "abstract_task.h"
 #include "axioms.h"
 #include "global_state.h"
@@ -269,4 +313,6 @@ public:
     }
 };
 
-#endif
+#endif // ifdef EXTERNAL_SEARCH
+
+#endif // STATE_REGISTRY_H

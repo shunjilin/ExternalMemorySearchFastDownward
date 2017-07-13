@@ -4,6 +4,7 @@
 #include "../globals.h"
 #include "../option_parser.h"
 #include "../plugin.h"
+
 #include "../state_registry.h"
 
 #include "../utils/collections.h"

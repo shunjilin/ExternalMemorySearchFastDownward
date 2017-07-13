@@ -3,7 +3,9 @@
 
 #include "evaluator.h"
 #include "operator_id.h"
+#ifndef EXTERNAL_SEARCH
 #include "per_state_information.h"
+#endif
 #include "task_proxy.h"
 
 #include "algorithms/ordered_set.h"
@@ -55,8 +57,10 @@ protected:
       flag is set to true - as soon as the cache is accessed it will create
       entries for all existing states
     */
+#ifndef EXTERNAL_SEARCH
     PerStateInformation<HEntry> heuristic_cache;
     bool cache_h_values;
+#endif
 
     // Hold a reference to the task implementation and pass it to objects that need it.
     const std::shared_ptr<AbstractTask> task;

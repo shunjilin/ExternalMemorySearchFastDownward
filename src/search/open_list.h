@@ -8,7 +8,12 @@
 
 class GlobalOperator;
 class Heuristic;
-class StateID;
+
+#ifdef EXTERNAL_SEARCH
+#include "global_state.h"
+#else
+class StateID; // this is not actually forward declaration... misleading.
+#endif
 
 
 template<class Entry>
@@ -58,8 +63,12 @@ public:
       empty vector. Then remove_min stores the key for the popped
       element there.
     */
+#ifdef EXTERNAL_SEARCH
+    virtual Entry remove_min() = 0;
+#else
     virtual Entry remove_min(std::vector<int> *key = 0) = 0;
-
+#endif
+    
     // Return true if the open list is empty.
     virtual bool empty() const = 0;
 
@@ -133,12 +142,16 @@ public:
 };
 
 
+#ifdef EXTERNAL_SEARCH
+using StateOpenListEntry = GlobalState;
+using StateOpenList = OpenList<StateOpenListEntry>;
+#else
 using StateOpenListEntry = StateID;
 using EdgeOpenListEntry = std::pair<StateID, int>;
 
 using StateOpenList = OpenList<StateOpenListEntry>;
 using EdgeOpenList = OpenList<EdgeOpenListEntry>;
-
+#endif
 
 template<class Entry>
 OpenList<Entry>::OpenList(bool only_preferred)

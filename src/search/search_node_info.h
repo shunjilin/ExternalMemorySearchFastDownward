@@ -8,17 +8,34 @@
 
 struct SearchNodeInfo {
     enum NodeStatus {NEW = 0, OPEN = 1, CLOSED = 2, DEAD_END = 3};
-
+#ifdef EXTERNAL_SEARCH
+    int g;
+#else
     unsigned int status : 2;
     int g : 30;
+#endif
     StateID parent_state_id;
     int creating_operator;
+#ifndef EXTERNAL_SEARCH
     int real_g;
+#endif
 
+
+#ifdef EXTERNAL_SEARCH
+    SearchNodeInfo()
+    : g(-1), parent_state_id(StateID::no_state),
+        creating_operator(-1)
+    {
+    }
+#else
     SearchNodeInfo()
         : status(NEW), g(-1), parent_state_id(StateID::no_state),
-          creating_operator(-1), real_g(-1) {
+          creating_operator(-1)
+
+        ,real_g(-1)
+    {
     }
+#endif
 };
 
 #endif
