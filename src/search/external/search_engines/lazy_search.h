@@ -30,6 +30,7 @@ namespace lazy_search {
         std::shared_ptr<PruningMethod> pruning_method;
 
         std::pair<GlobalState, bool> fetch_next_node(); // should i use node here?
+        bool check_goal_and_set_plan(const GlobalState &state);
 
         void start_f_value_statistics(EvaluationContext &eval_context);
         void update_f_value_statistics(const GlobalState &node);

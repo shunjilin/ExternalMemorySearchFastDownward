@@ -6,6 +6,7 @@
 #include "algorithms/int_packer.h"
 #include "global_operator.h"
 #include "global_state.h"
+#include "operator_cost.h" // StateRegistry subsume role of searchspace
 
 #include <vector>
 #include <algorithm>
@@ -14,13 +15,14 @@ using namespace std;
 
 StateRegistry::StateRegistry(
     const AbstractTask &task, const int_packer::IntPacker &state_packer,
-    AxiomEvaluator &axiom_evaluator, const std::vector<int> &initial_state_data)
+    AxiomEvaluator &axiom_evaluator, const std::vector<int> &initial_state_data,
+                             OperatorCost cost_type)
     : task(task),
       state_packer(state_packer),
       axiom_evaluator(axiom_evaluator),
       initial_state_data(initial_state_data),
-      num_variables(initial_state_data.size()) {
-}
+      num_variables(initial_state_data.size()),
+      cost_type(cost_type) {}
 
 
 int StateRegistry::get_bins_per_state() const {
@@ -52,16 +54,20 @@ const GlobalState StateRegistry::get_initial_state() {
     
     
 GlobalState StateRegistry::
-get_successor_state(const GlobalState &predecessor, const GlobalOperator &op) {
+get_successor_state(const GlobalState &predecessor, const GlobalOperator *op) {
     assert(!op.is_axiom());
     std::vector<PackedStateBin> buffer(predecessor.get_packed_vec()); // SHUNJI TODO: implement this
-    for (size_t i = 0; i < op.get_effects().size(); ++i) {
-        const GlobalEffect &effect = op.get_effects()[i];
+    for (size_t i = 0; i < op->get_effects().size(); ++i) {
+        const GlobalEffect &effect = op->get_effects()[i];
         if (effect.does_fire(predecessor))
             state_packer.set(&buffer[0], effect.var, effect.val);
     }
     axiom_evaluator.evaluate(&buffer[0], state_packer);
-    return GlobalState(buffer); // SHUNJI TODO: implement this.
+    return GlobalState(buffer,
+                       predecessor.get_state_id(),
+                       get_op_index_hacked(op),
+                       predecessor.get_g() +
+                       get_adjusted_action_cost(*op, cost_type)); // SHUNJI TODO: implement this.
 }
 
 int StateRegistry::get_state_size_in_bytes() const {

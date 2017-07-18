@@ -1,6 +1,7 @@
 #ifdef EXTERNAL_SEARCH
 #include "global_state.h"
 #include "globals.h"
+#include "state_id.h"
 #include "algorithms/int_packer.h"
 
 #include <vector>
@@ -8,9 +9,18 @@
 
 using PackedStateBin = int_packer::IntPacker::Bin;
 
-GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState)
-    : packedState(packedState) {
-}
+GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState) :
+    packedState(packedState)
+{}
+
+GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState,
+                         StateID parent_state_id,
+                         int creating_operator,
+                         int g)
+    : packedState(packedState),
+      parent_state_id(parent_state_id),
+      creating_operator(creating_operator),
+      g(g) {}
     
 std::vector<int> GlobalState::get_values() const {
     int num_variables = g_initial_state_data.size();
@@ -19,7 +29,6 @@ std::vector<int> GlobalState::get_values() const {
         values[var] = (*this)[var];
     return values;
 }
-
 
 int GlobalState::operator[](int var) const {
     assert(var >= 0);
@@ -35,8 +44,20 @@ const std::vector<PackedStateBin> &GlobalState::get_packed_vec() const {
     return packedState;
 }
 
+StateID GlobalState::get_state_id() const {
+    return state_id;    
+}
+
+StateID GlobalState::get_parent_state_id() const {
+    return parent_state_id;
+}
+
+int GlobalState::get_creating_operator() const {
+    return creating_operator;
+}
+
 int GlobalState::get_g() const {
-    return info.g;
+    return g;
 }
 
 #else // ifndef EXTERNAL_SEARCH

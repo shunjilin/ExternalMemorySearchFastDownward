@@ -131,7 +131,7 @@ namespace lazy_search {
             /*if ((node.get_real_g() + op->get_cost()) >= bound)
               continue;*/ // no need for bound?
 
-            GlobalState succ_state = state_registry.get_successor_state(s, *op);
+            GlobalState succ_state = state_registry.get_successor_state(s, op);
             statistics.inc_generated();
             bool is_preferred = preferred_operators.contains(op_id);
 
@@ -183,6 +183,18 @@ namespace lazy_search {
             return make_pair(state, true);
         }
     }
+
+
+    bool LazySearch::check_goal_and_set_plan(const GlobalState &state) {
+        if (test_goal(state)) {
+            cout << "Solution found!" << endl;
+            set_plan(closed_list->trace_path(state));
+            return true;
+        }
+            return false;
+    }
+        
+    
 
     /*void LazySearch::dump_search_space() const {
         search_space.dump();

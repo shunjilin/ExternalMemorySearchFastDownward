@@ -8,6 +8,7 @@
 #include "algorithms/int_packer.h"
 #include "global_operator.h"
 #include "global_state.h"
+#include "operator_cost.h" // StateRegistry subsume role of searchspace
 
 #include <vector>
 
@@ -24,6 +25,7 @@ class StateRegistry {
     AxiomEvaluator &axiom_evaluator;
     const std::vector<int> &initial_state_data;
     const int num_variables;
+    OperatorCost cost_type;
     
     int get_bins_per_state() const;
  public:
@@ -31,14 +33,15 @@ class StateRegistry {
         const AbstractTask &task,
         const int_packer::IntPacker &state_packer,
         AxiomEvaluator &axiom_evaluator,
-        const std::vector<int> &initial_state_data);
+        const std::vector<int> &initial_state_data,
+                  OperatorCost cost_type = NORMAL);
     
     const AbstractTask &get_task() const;
     int get_num_variables() const;
     int get_state_value(const PackedStateBin *buffer, int var) const;
     const GlobalState get_initial_state();
     GlobalState get_successor_state(const GlobalState &predecessor,
-                                    const GlobalOperator &op);
+                                    const GlobalOperator *op);
     int get_state_size_in_bytes() const;
 };
 

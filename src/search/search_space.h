@@ -25,8 +25,6 @@ class SearchSpace {
                     std::vector<const GlobalOperator *> &path) const;
     */
     
- 
-    
 };
 
 #else // ifndef EXTERNAL_SEARCH

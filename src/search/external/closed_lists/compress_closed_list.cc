@@ -3,8 +3,9 @@
 #include "../closed_list.h"
 #include "../../option_parser.h"
 #include "../../plugin.h"
-
+#include "../../global_operator.h"
 #include "../../utils/memory.h"
+#include "../../globals.h"
 #include <unordered_set>
 
 using namespace std;
@@ -22,6 +23,8 @@ namespace compress_closed_list {
         virtual ~CompressClosedList() override = default;
 
         virtual std::pair<found, reopened> find_insert(const Entry &entry) override;
+        virtual vector<const GlobalOperator*> trace_path(const Entry &entry)
+            const override;
         
     };
 
@@ -47,6 +50,31 @@ namespace compress_closed_list {
                 return std::make_pair(true, false);
             }
         }
+    }
+
+    template<class Entry>
+    vector<const GlobalOperator *> CompressClosedList<Entry>::
+    trace_path(const Entry &entry) const {
+        vector<const GlobalOperator *> path;
+        Entry current_state = entry;
+        while (true) {
+            if (current_state.get_creating_operator() == -1) {
+                assert(current_state.get_parent_state_id == StateID::no_state);
+                break;
+            }
+            //assert(utils::in_bounds(info.creating_operator, g_operators));
+            const GlobalOperator *op =
+                &g_operators[current_state.get_creating_operator()];
+            path.push_back(op);
+            for (auto &elem : closed) {
+                if (elem.get_state_id() == current_state.get_parent_state_id()) {
+                    current_state = elem;
+                    break;
+                }
+            }
+        }
+        reverse(path.begin(), path.end());
+        return path;
     }
 
     CompressClosedListFactory::

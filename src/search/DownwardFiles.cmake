@@ -104,7 +104,7 @@ fast_downward_plugin(
         plugin
         pruning_method
         search_engine
-        search_node_info
+        #search_node_info
         #search_progress
         search_space
         search_statistics

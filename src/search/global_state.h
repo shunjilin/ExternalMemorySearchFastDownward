@@ -4,24 +4,35 @@
 #ifdef EXTERNAL_SEARCH
 
 #include "algorithms/int_packer.h"
-#include "search_node_info.h"
+#include "state_id.h"
 #include <vector>
-
 using PackedStateBin = int_packer::IntPacker::Bin;
 
 // GlobalState IS a node for external search purposes
 class GlobalState {
     std::vector<PackedStateBin> packedState;
-    SearchNodeInfo info;
+    StateID state_id;
+    StateID parent_state_id = StateID::no_state;
+    int creating_operator = -1;
+    int g = -1;
  public:
     GlobalState() = default;
     GlobalState(const std::vector<PackedStateBin> &packedState);
+    GlobalState(const std::vector<PackedStateBin> &packedState,
+                StateID parent_state_id,
+                int creating_operator,
+                int g);
     std::vector<int> get_values() const;
     int operator[](int var) const;
     bool operator==(const GlobalState &other) const;
     const std::vector<PackedStateBin> &get_packed_vec() const;
 
+    StateID get_state_id() const;
+    StateID get_parent_state_id() const;
+    int get_creating_operator() const;
     int get_g() const;
+
+    
 
 };
 
