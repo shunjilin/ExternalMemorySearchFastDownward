@@ -116,6 +116,7 @@ fast_downward_plugin(
         #external/open_lists/external_tiebreaking_open_list
         external/closed_list
         external/closed_list_factory
+        external/file_utility
         #external/closed_lists/compress_closed_list
         #external/search_engines/lazy_search
         

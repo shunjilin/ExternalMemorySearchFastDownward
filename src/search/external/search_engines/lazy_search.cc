@@ -59,6 +59,7 @@ namespace lazy_search {
         assert(!heuristics.empty());
 
         const GlobalState &initial_state = state_registry.get_initial_state();
+        
         for (Heuristic *heuristic : heuristics) {
             heuristic->notify_initial_state(initial_state);
         }
@@ -98,8 +99,10 @@ namespace lazy_search {
 
         GlobalState s = n.first;
 
-        if (check_goal_and_set_plan(s))
+        if (check_goal_and_set_plan(s)) {
+            open_list->clear();
             return SOLVED;
+        }
         bool found, reopened;
         std::tie(found, reopened) = closed_list->find_insert(s);
         // SHUNJI TO CONSIDER: (currently reopening handled by closed node)
@@ -173,7 +176,6 @@ namespace lazy_search {
         while (true) {
             if (open_list->empty()) {
                 cout << "Completely explored state space -- no solution!" << endl;
-                const GlobalState &initial_state = state_registry.get_initial_state();
                 // SHUNJI TODOO: make sure GlobalState initializes to dummy node
                 return make_pair(GlobalState(), false);
             }

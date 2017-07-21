@@ -6,17 +6,21 @@
 #include "algorithms/int_packer.h"
 #include "state_id.h"
 #include <vector>
+#include <fstream>
 using PackedStateBin = int_packer::IntPacker::Bin;
 
 // GlobalState IS a node for external search purposes
+
 class GlobalState {
     std::vector<PackedStateBin> packedState;
     StateID state_id;
     StateID parent_state_id = StateID::no_state;
     int creating_operator = -1;
-    int g = -1;
+    int g = 0;
  public:
+    static const GlobalState dummy;
     GlobalState() = default;
+    GlobalState(StateID state_id); // for dummy state
     GlobalState(const std::vector<PackedStateBin> &packedState);
     GlobalState(const std::vector<PackedStateBin> &packedState,
                 StateID parent_state_id,
@@ -32,8 +36,11 @@ class GlobalState {
     int get_creating_operator() const;
     int get_g() const;
 
-    
+    bool write(std::fstream& file) const; // serialize Globalstate
+    bool read(std::fstream& file); // deserialize Globalstate
 
+    static size_t bytes_per_state;
+    static size_t packedState_bytes;
 };
 
 namespace std {

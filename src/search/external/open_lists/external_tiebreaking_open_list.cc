@@ -6,20 +6,30 @@
 
 #include "../../utils/memory.h"
 
-#include <vector>
+#include "../file_utility.h"
+
+#include <utility>
 #include <map>
+#include <set>
+#include <string>
+
+// for constructing directory
+#include <sys/types.h>
+#include <sys/stat.h>
 
 using namespace std;
 
 namespace external_tiebreaking_open_list {
     template<class Entry>
     class ExternalTieBreakingOpenList : public OpenList<Entry> {
-        using Bucket = deque<Entry>;
 
-        map<const vector<int>, Bucket> buckets;
+        map<int, map<int, named_fstream> > fg_buckets;
+        
         int size;
 
         vector<Evaluator *> evaluators;
+
+        
         //bool allow_unsafe_pruning;
 
     protected:
@@ -36,6 +46,9 @@ namespace external_tiebreaking_open_list {
         virtual void get_involved_heuristics(set<Heuristic *> &hset) override;
         virtual bool is_dead_end(EvaluationContext &eval_context) const override;
         virtual bool is_reliable_dead_end(EvaluationContext &eval_context) const override;
+        string get_bucket_string(int f, int g) const;
+        bool exists_bucket(int f, int g) const;
+        void create_bucket(int f, int g);
     };
 
     
@@ -43,33 +56,58 @@ namespace external_tiebreaking_open_list {
     ExternalTieBreakingOpenList<Entry>::ExternalTieBreakingOpenList(const Options &opts)
         : OpenList<Entry>(false), //opts.get<bool>("pref_only")),
         size(0), evaluators(opts.get_list<Evaluator *>("evals")) {
+        // create directory for open list files if not exist
+        mkdir("open_list_buckets", 0744);
     }
 
     template<class Entry>
     void ExternalTieBreakingOpenList<Entry>::
     do_insertion(EvaluationContext &eval_context, const Entry &entry) {
-        vector<int> key;
-        key.reserve(evaluators.size());
-        for (Evaluator *evaluator : evaluators)
-            key.push_back(eval_context.get_heuristic_value_or_infinity(evaluator));
+        assert(evaluators.size() == 1);
+        auto f = eval_context.get_heuristic_value_or_infinity(evaluators[0]);
+        auto g = entry.get_g();
 
-        buckets[key].push_back(entry);
+        if (!exists_bucket(f, g)) create_bucket(f, g);
+        // do check?
+        entry.write(fg_buckets[f][g]);
         ++size;
     }
 
     template<class Entry>
     Entry ExternalTieBreakingOpenList<Entry>::remove_min() {
         assert(size > 0);
-        typename map<const vector<int>, Bucket>::iterator it;
-        it = buckets.begin();
-        assert(it != buckets.end());
-        assert(!it->second.empty());
-        --size;
-        Entry result = it->second.front();
-        it->second.pop_front();
-        if (it->second.empty())
-            buckets.erase(it);
-        return result;
+        Entry min_entry = Entry::dummy;
+
+        // tiebreak by lowest f value
+        for (auto f_bucket = fg_buckets.begin();
+             f_bucket != fg_buckets.end(); ++f_bucket) {
+            // tiebreak by highest g value
+            for (auto g_bucket = f_bucket->second.rbegin();
+                 g_bucket != f_bucket->second.rend(); ++g_bucket) {
+                
+                //reverse seek
+                g_bucket->second.seekp(-Entry::bytes_per_state, ios::cur);
+                
+                min_entry.read(g_bucket->second);
+
+                // reurn pointer for subsequent write / read
+                g_bucket->second.seekp(-Entry::bytes_per_state, ios::cur);
+
+                // if g bucket is empty
+                if (g_bucket->second.tellp() == 0) {
+                    auto g = g_bucket->first;
+                    f_bucket->second.erase(g);
+                    // if f bucket is empty
+                    if (f_bucket->second.empty()) {
+                        auto f = f_bucket->first;
+                        fg_buckets.erase(f);
+                    }
+                }
+                --size;
+                return min_entry;
+            }
+        }
+        return min_entry;
     }
 
     template<class Entry>
@@ -79,7 +117,7 @@ namespace external_tiebreaking_open_list {
 
     template<class Entry>
     void ExternalTieBreakingOpenList<Entry>::clear() {
-        buckets.clear();
+        fg_buckets.clear();
         size = 0;
     }
 
@@ -119,6 +157,35 @@ namespace external_tiebreaking_open_list {
                 evaluator->dead_ends_are_reliable())
                 return true;
         return false;
+    }
+
+    template<class Entry>
+    string ExternalTieBreakingOpenList<Entry>::
+    get_bucket_string(int f, int g) const {
+        std::ostringstream oss;
+        oss << "open_list_buckets/" <<  f << "_" << g << ".bucket";
+        return oss.str();
+    }
+
+    template<class Entry>
+    bool ExternalTieBreakingOpenList<Entry>::
+    exists_bucket(int f, int g) const {
+        auto f_bucket = fg_buckets.find(f);
+        if (f_bucket == fg_buckets.end()) return false;
+        auto g_bucket = f_bucket->second.find(g);
+        if (g_bucket == f_bucket->second.end()) return false;
+        return true;
+    }
+
+    template<class Entry>
+    void ExternalTieBreakingOpenList<Entry>::
+    create_bucket(int f, int g) {
+        // to prevent copying of strings, in-place construction
+        fg_buckets[f].emplace(piecewise_construct,
+                              forward_as_tuple(g),
+                              forward_as_tuple(get_bucket_string(f, g)));
+        // TODO: do check
+        //if (fg_buckets[f][g].is_open())
     }
 
     

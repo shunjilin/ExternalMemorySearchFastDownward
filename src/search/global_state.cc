@@ -5,13 +5,33 @@
 #include "algorithms/int_packer.h"
 
 #include <vector>
+#include <fstream>
 #include <cassert>
 
 using PackedStateBin = int_packer::IntPacker::Bin;
+const GlobalState GlobalState::dummy = GlobalState(StateID::no_state);
 
+// true value initialized on initial node generation
+std::size_t GlobalState::bytes_per_state = 0;
+std::size_t GlobalState::packedState_bytes = 0;
+    
 GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState) :
     packedState(packedState)
-{}
+{
+    if (!packedState_bytes) {
+        packedState_bytes = sizeof(packedState.front()) * packedState.size();
+    }
+    if (!bytes_per_state) {
+        bytes_per_state =  sizeof(packedState.front()) * packedState.size() +
+            sizeof(state_id) +
+            sizeof(parent_state_id) +
+            sizeof(creating_operator) +
+            sizeof(g);
+    }
+}
+
+// for dummy state that does not increment state id
+GlobalState::GlobalState(const StateID state_id) : state_id(state_id) {}
 
 GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState,
                          StateID parent_state_id,
@@ -59,6 +79,29 @@ int GlobalState::get_creating_operator() const {
 int GlobalState::get_g() const {
     return g;
 }
+
+bool GlobalState::write(std::fstream& file) const {
+    file.write(reinterpret_cast<const char *>
+               (&packedState.front()), packedState_bytes);
+    
+    file.write(reinterpret_cast<const char *>(&state_id), sizeof(state_id));
+    file.write(reinterpret_cast<const char *>(&parent_state_id), sizeof(parent_state_id));
+    file.write(reinterpret_cast<const char *>(&creating_operator), sizeof(creating_operator));
+    file.write(reinterpret_cast<const char *>(&g), sizeof(g));
+    return !file.fail();
+}
+
+bool GlobalState::read(std::fstream& file) {
+    packedState.resize(packedState_bytes / sizeof(PackedStateBin));
+    file.read(reinterpret_cast<char *>
+              (&packedState.front()), packedState_bytes);
+    file.read(reinterpret_cast<char *>(&state_id), sizeof(state_id));
+    file.read(reinterpret_cast<char *>(&parent_state_id), sizeof(parent_state_id));
+    file.read(reinterpret_cast<char *>(&creating_operator), sizeof(creating_operator));
+    file.read(reinterpret_cast<char *>(&g), sizeof(g));
+
+    return !file.fail();
+}          
 
 #else // ifndef EXTERNAL_SEARCH
 
