@@ -49,14 +49,14 @@ const GlobalState StateRegistry::get_initial_state() {
         state_packer.set(&buffer[0], i, initial_state_data[i]);
     }
     axiom_evaluator.evaluate(&buffer[0], state_packer);
-    return GlobalState(buffer); // SHUNJI TODO: implement this.
+    return GlobalState(buffer);
 }
     
     
 GlobalState StateRegistry::
 get_successor_state(const GlobalState &predecessor, const GlobalOperator *op) {
     assert(!op.is_axiom());
-    std::vector<PackedStateBin> buffer(predecessor.get_packed_vec()); // SHUNJI TODO: implement this
+    std::vector<PackedStateBin> buffer(predecessor.get_packed_vec());
     for (size_t i = 0; i < op->get_effects().size(); ++i) {
         const GlobalEffect &effect = op->get_effects()[i];
         if (effect.does_fire(predecessor))

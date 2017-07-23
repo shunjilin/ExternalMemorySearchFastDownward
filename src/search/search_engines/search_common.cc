@@ -9,7 +9,7 @@
 
 #ifdef EXTERNAL_SEARCH
 #include "../external/closed_list_factory.h"
-#include "../external/closed_lists/compress_closed_list.h"
+#include "../external/closed_lists/compress/compress_closed_list.h"
 #include "../external/open_lists/external_tiebreaking_open_list.h"
 #include <tuple>
 #else
@@ -38,9 +38,12 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
 
             Options options;
             options.set("evals", evals);
-            options.set("pref_only", false);
-            options.set("unsafe_pruning", false);
+            options.set("pref_only", false); // is this needed?
+            options.set("unsafe_pruning", false); // is this needed?
             options.set("reopen_closed", true);
+            
+            options.set("enable_partitioning", false); // no partition
+            options.set("internal_closed_gb", 1.0);
             shared_ptr<OpenListFactory> open =
                 make_shared<external_tiebreaking_open_list::
                             ExternalTieBreakingOpenListFactory>(options);

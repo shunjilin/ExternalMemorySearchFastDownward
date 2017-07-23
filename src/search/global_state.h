@@ -20,7 +20,7 @@ class GlobalState {
  public:
     static const GlobalState dummy;
     GlobalState() = default;
-    GlobalState(StateID state_id); // for dummy state
+    GlobalState(StateID state_id); // for dummy state, package this into static function?
     GlobalState(const std::vector<PackedStateBin> &packedState);
     GlobalState(const std::vector<PackedStateBin> &packedState,
                 StateID parent_state_id,
@@ -37,7 +37,11 @@ class GlobalState {
     int get_g() const;
 
     bool write(std::fstream& file) const; // serialize Globalstate
+    void write(char* ptr) const;
     bool read(std::fstream& file); // deserialize Globalstate
+    void read(char* ptr); 
+
+    
 
     static size_t bytes_per_state;
     static size_t packedState_bytes;

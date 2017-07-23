@@ -121,7 +121,7 @@ fast_downward_plugin(
         #external/search_engines/lazy_search
         
 
-    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES MAS_HEURISTIC PLUGIN_SSD_ASTAR
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC MAS_HEURISTIC PLUGIN_SSD_ASTAR
     DEPENDENCY_ONLY
 )
 
@@ -167,7 +167,9 @@ fast_downward_plugin(
   NAME COMPRESS_CLOSED_LIST
   HELP "Compress closed list"
   SOURCES
-      external/closed_lists/compress_closed_list
+      external/closed_lists/compress/compress_closed_list
+      external/closed_lists/compress/mapping_table
+      external/closed_lists/compress/pointer_table
   DEPENDENCY ONLY
 )
 # END OF EXTERNAL SEARCH PLUGINS

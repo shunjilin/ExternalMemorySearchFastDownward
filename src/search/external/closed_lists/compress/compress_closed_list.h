@@ -1,8 +1,8 @@
 #ifndef EXTERNAL_CLOSED_LISTS_COMPRESS_H
 #define EXTERNAL_CLOSED_LISTS_COMPRESS_H
 
-#include "../closed_list_factory.h"
-#include "../../option_parser_util.h"
+#include "../../closed_list_factory.h"
+#include "../../../option_parser_util.h"
 
 namespace compress_closed_list {
     class CompressClosedListFactory : public ClosedListFactory {

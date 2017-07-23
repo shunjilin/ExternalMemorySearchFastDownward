@@ -7,6 +7,7 @@
 #include <vector>
 #include <fstream>
 #include <cassert>
+#include <cstring>
 
 using PackedStateBin = int_packer::IntPacker::Bin;
 const GlobalState GlobalState::dummy = GlobalState(StateID::no_state);
@@ -91,6 +92,18 @@ bool GlobalState::write(std::fstream& file) const {
     return !file.fail();
 }
 
+void GlobalState::write(char* ptr) const {
+    memcpy(ptr, &packedState.front(), packedState_bytes);
+    ptr += packedState_bytes;
+    memcpy(ptr, &state_id, sizeof(state_id));
+    ptr += sizeof(state_id);
+    memcpy(ptr, &parent_state_id, sizeof(parent_state_id));
+    ptr += sizeof(parent_state_id);
+    memcpy(ptr, &creating_operator, sizeof(creating_operator));
+    ptr += sizeof(creating_operator);
+    memcpy(ptr, &g, sizeof(g));
+}
+
 bool GlobalState::read(std::fstream& file) {
     packedState.resize(packedState_bytes / sizeof(PackedStateBin));
     file.read(reinterpret_cast<char *>
@@ -101,7 +114,20 @@ bool GlobalState::read(std::fstream& file) {
     file.read(reinterpret_cast<char *>(&g), sizeof(g));
 
     return !file.fail();
-}          
+}
+
+void GlobalState::read(char* ptr) {
+    packedState.resize(packedState_bytes / sizeof(PackedStateBin));
+    memcpy(&packedState.front(), ptr, packedState_bytes);
+    ptr += packedState_bytes;
+    memcpy(&state_id, ptr, sizeof(state_id));
+    ptr += sizeof(state_id);
+    memcpy(&parent_state_id, ptr, sizeof(parent_state_id));
+    ptr += sizeof(parent_state_id);
+    memcpy(&creating_operator, ptr, sizeof(creating_operator));
+    ptr += sizeof(creating_operator);
+    memcpy(&g, ptr, sizeof(g));
+}
 
 #else // ifndef EXTERNAL_SEARCH
 
