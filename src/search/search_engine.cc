@@ -85,8 +85,7 @@ bool SearchEngine::check_goal_and_set_plan(const GlobalState &state) {
         cout << "Solution found!" << endl;
         Plan plan;
 #ifdef EXTERNAL_SEARCH
-        // SHUNJI TODO: implement virtual function for trace_path
-        std::cerr << "TRACE PATH NOT IMPLEMENTED" << std::endl;
+        // For external search, path tracing is delegated to open or closed list
 #else
         search_space.trace_path(state, plan);
 #endif

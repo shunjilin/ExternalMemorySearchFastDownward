@@ -49,6 +49,8 @@ const GlobalState StateRegistry::get_initial_state() {
         state_packer.set(&buffer[0], i, initial_state_data[i]);
     }
     axiom_evaluator.evaluate(&buffer[0], state_packer);
+    // seems costly to copy buffer each time in constructor
+    // TODO:: use move semantics for buffer
     return GlobalState(buffer);
 }
     
@@ -63,6 +65,8 @@ get_successor_state(const GlobalState &predecessor, const GlobalOperator *op) {
             state_packer.set(&buffer[0], effect.var, effect.val);
     }
     axiom_evaluator.evaluate(&buffer[0], state_packer);
+    // seems costly to copy buffer each time in constructor
+    // TODO:: use move semantics for buffer
     return GlobalState(buffer,
                        predecessor.get_state_id(),
                        get_op_index_hacked(op),

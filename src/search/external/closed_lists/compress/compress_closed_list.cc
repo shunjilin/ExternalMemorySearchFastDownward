@@ -8,6 +8,7 @@
 #include "../../../global_operator.h"
 #include "../../../utils/memory.h"
 #include "../../../globals.h"
+#include "../../hash_functions/zobrist.h"
 
 #include <vector>
 #include <memory>
@@ -25,13 +26,15 @@ using namespace std;
 using found = bool;
 using reopened = bool;
 
+using namespace zobrist;
+
 namespace compress_closed_list {
     template<class Entry>
-    class CompressClosedList : public ClosedList<Entry> {
-        unordered_set<Entry> closed;
+    class CompressClosedList : public ClosedList<Entry> { 
         bool reopen_closed;
         bool enable_partitioning;
-        
+
+        ZobristHash<Entry> hasher;
         vector<unordered_set<Entry> > buffers;
         unique_ptr<MappingTable> mapping_table;
         //unordered_set<Entry> buffer;
@@ -44,6 +47,8 @@ namespace compress_closed_list {
         size_t max_buffer_entries;
 
         bool initialized = false; // lazy initialization
+
+        
 
         void flush_buffer();
         bool initialize(size_t entry_size_in_bytes);
@@ -79,8 +84,6 @@ namespace compress_closed_list {
                 utils::make_unique_ptr<MappingTable>(max_buffer_entries);
         }
         
-
-        
         // initialize external closed list
         auto external_closed_bytes =
             internal_closed.get_max_entries() * entry_size_in_bytes;
@@ -109,8 +112,8 @@ namespace compress_closed_list {
     template<class Entry>
     CompressClosedList<Entry>::CompressClosedList(const Options &opts)
         : ClosedList<Entry>(opts.get<bool>("reopen_closed")),
-        enable_partitioning(opts.get<bool>("enable_partitioning")), // implement this, maybe remove and set default
-        internal_closed(opts.get<double>("internal_closed_gb") * pow(1024, 3)) // implement this
+        enable_partitioning(opts.get<bool>("enable_partitioning")),
+        internal_closed(opts.get<double>("internal_closed_gb") * pow(1024, 3)) 
     {
         cout << internal_closed.get_max_size_in_bytes() << " EXTERNAL CLOSED LIST SIZE IN BYTES" << endl;
         cout << "max entries of closed list is " << internal_closed.get_max_entries() << endl;
@@ -148,7 +151,7 @@ namespace compress_closed_list {
         
         // Then look in hash tables
         //cout << "looking in hash table for " << entry.get_state_id() << endl;
-        auto hasher = hash<Entry>();
+        //auto hasher = hash<Entry>();
         auto hash_value = hasher(entry);
         auto ptr = internal_closed.hash_find(hash_value);
         while (!internal_closed.ptr_is_invalid(ptr)) {
@@ -176,11 +179,11 @@ namespace compress_closed_list {
 
     template<class Entry>
     void CompressClosedList<Entry>::flush_buffer() {
-        cout << "FLUSH" << endl;
+        //cout << "FLUSH" << endl;
         for (auto& node : buffers[0]) {
             write_external_at(node, external_closed_index);
             
-            auto hasher = hash<Entry>();
+            //auto hasher = hash<Entry>();
             internal_closed.hash_insert(external_closed_index, hasher(node));
             
             ++external_closed_index;
@@ -201,6 +204,8 @@ namespace compress_closed_list {
                 break;
             }
             //assert(utils::in_bounds(info.creating_operator, g_operators));
+
+            // use of g_operators creates dependency on globals.h
             const GlobalOperator *op =
                 &g_operators[current_state.get_creating_operator()];
             path.push_back(op);
@@ -214,10 +219,7 @@ namespace compress_closed_list {
                     break;
                 }
             }
-            if (found_in_buffer) {
-                cout << "Found in buffer" << endl;
-                continue;
-            }
+            if (found_in_buffer) continue;
 
             // then look in hash tables
             cout << " looking in hash table" << endl;

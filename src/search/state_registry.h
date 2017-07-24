@@ -18,6 +18,10 @@
    e.g. root task.
 */
 
+/* Can state registry handle the role of generating hash functions?
+   Seems reasonable as state registry has access to state variable information.
+ */
+
 
 class StateRegistry {
     const AbstractTask &task;

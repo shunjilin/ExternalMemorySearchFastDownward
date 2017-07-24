@@ -47,6 +47,10 @@ class GlobalState {
     static size_t packedState_bytes;
 };
 
+// Specialize hash for std::unordered_map as it needs static hash function,
+// speed is not critical as it is in-memory hashing (bottleneck is IO).
+// Alternative is to create custom data structure for hashing, in order
+// to use runtime generated hash functions like zobrist hashing.
 namespace std {
     template<> struct hash<GlobalState> {
         size_t operator()(const GlobalState &state) const {
@@ -59,6 +63,7 @@ namespace std {
         }
     };
 }
+
 
 #else // ifndef EXTERNAL_SEARCH
 
