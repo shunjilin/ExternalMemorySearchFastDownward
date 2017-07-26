@@ -176,8 +176,7 @@ namespace lazy_search {
         while (true) {
             if (open_list->empty()) {
                 cout << "Completely explored state space -- no solution!" << endl;
-                // SHUNJI TODOO: make sure GlobalState initializes to dummy node
-                return make_pair(GlobalState::dummy, false);
+                return make_pair(GlobalState(), false);
             }
 
             GlobalState state = open_list->remove_min();

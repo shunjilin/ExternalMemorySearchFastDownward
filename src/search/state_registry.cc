@@ -6,7 +6,7 @@
 #include "algorithms/int_packer.h"
 #include "global_operator.h"
 #include "global_state.h"
-#include "operator_cost.h" // StateRegistry subsume role of searchspace
+#include "operator_cost.h"
 
 #include <vector>
 #include <algorithm>
@@ -71,7 +71,7 @@ get_successor_state(const GlobalState &predecessor, const GlobalOperator *op) {
                        predecessor.get_state_id(),
                        get_op_index_hacked(op),
                        predecessor.get_g() +
-                       get_adjusted_action_cost(*op, cost_type)); // SHUNJI TODO: implement this.
+                       get_adjusted_action_cost(*op, cost_type));
 }
 
 int StateRegistry::get_state_size_in_bytes() const {

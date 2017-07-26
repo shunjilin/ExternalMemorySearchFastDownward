@@ -41,8 +41,7 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
             options.set("pref_only", false); // is this needed?
             options.set("unsafe_pruning", false); // is this needed?
             options.set("reopen_closed", true);
-            
-            options.set("enable_partitioning", false); // no partition
+            options.set("enable_partitioning", true);
             options.set("internal_closed_gb", 1.0);
             shared_ptr<OpenListFactory> open =
                 make_shared<external_tiebreaking_open_list::

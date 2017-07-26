@@ -22,11 +22,10 @@
 #include <fcntl.h>
 
 using namespace std;
+using namespace zobrist;
 
 using found = bool;
 using reopened = bool;
-
-using namespace zobrist;
 
 namespace compress_closed_list {
     template<class Entry>
@@ -34,10 +33,14 @@ namespace compress_closed_list {
         bool reopen_closed;
         bool enable_partitioning;
 
-        ZobristHash<Entry> hasher;
         vector<unordered_set<Entry> > buffers;
-        unique_ptr<MappingTable> mapping_table;
-        //unordered_set<Entry> buffer;
+
+        // for compress with partitioning
+        unique_ptr<MappingTable> partition_table;
+        unique_ptr<ZobristHash<Entry> > partition_hash;
+        unsigned n_partitions = 100;
+
+        
         PointerTable internal_closed;
         int external_closed_fd;
         char *external_closed;
@@ -48,9 +51,9 @@ namespace compress_closed_list {
 
         bool initialized = false; // lazy initialization
 
+        unsigned get_partition_value(const Entry &entry) const;
         
-
-        void flush_buffer();
+        void flush_buffer(size_t partition_value);
         bool initialize(size_t entry_size_in_bytes);
 
         void read_external_at(Entry& entry, size_t index) const;
@@ -63,7 +66,6 @@ namespace compress_closed_list {
         virtual std::pair<found, reopened> find_insert(const Entry &entry) override;
         virtual vector<const GlobalOperator*> trace_path(const Entry &entry)
             const override;
-        
     };
 
     /*                                                                      \
@@ -78,10 +80,15 @@ namespace compress_closed_list {
         // set max buffer entries
         max_buffer_entries = max_buffer_size_in_bytes / entry_size_in_bytes;
         
-        // initialize mapping table
+        // initialize partition table
         if (enable_partitioning) {
-            mapping_table =
+            partition_table =
                 utils::make_unique_ptr<MappingTable>(max_buffer_entries);
+            partition_hash =
+                utils::make_unique_ptr<ZobristHash<Entry> >();
+            buffers.resize(n_partitions);
+        } else {
+            buffers.resize(1); // use only buffers[0] if no partitioning
         }
         
         // initialize external closed list
@@ -103,7 +110,6 @@ namespace compress_closed_list {
             return false;
 
         initialized = true;
-        cout << "address at " << reinterpret_cast<size_t>(external_closed) << endl;
         
         return true;
     }
@@ -130,19 +136,17 @@ namespace compress_closed_list {
         }
         
         // First look in buffer
-        // TODO: modify to adapt to partitioning
-        // change vector to hash table?
-        if (buffers.empty()) {
-            buffers.resize(1);
-        }
-        //cout << "searching for " << entry.get_state_id() << endl;
-        auto buffer_it = buffers[0].find(entry);
-        if (buffer_it != buffers[0].end()) {
-            cout << "found " << buffer_it->get_state_id() << endl;
+        auto partition_value =
+            enable_partitioning ? get_partition_value(entry) : 0;
+        
+        auto& buffer = buffers[partition_value];
+        
+        auto buffer_it = buffer.find(entry);
+        if (buffer_it != buffer.end()) {
             if (reopen_closed) {
                 if (entry.get_g() < buffer_it->get_g()) {
-                    buffers[0].erase(buffer_it);
-                    buffers[0].insert(entry);
+                    buffer.erase(buffer_it);
+                    buffer.insert(entry);
                     return make_pair(true, true);
                 }
             }
@@ -150,45 +154,54 @@ namespace compress_closed_list {
         }
         
         // Then look in hash tables
-        //cout << "looking in hash table for " << entry.get_state_id() << endl;
-        //auto hasher = hash<Entry>();
-        auto hash_value = hasher(entry);
-        auto ptr = internal_closed.hash_find(hash_value);
+        auto ptr = internal_closed.hash_find(entry.get_hash_value());
         while (!internal_closed.ptr_is_invalid(ptr)) {
-            cout << " searching in external hash table for " << entry.get_state_id() << endl;
-            // read node from pointer
-            Entry node = Entry::dummy;
-            read_external_at(node, ptr);
-            if (node == entry) {
-                if (reopen_closed) {
-                    if (entry.get_g() < node.get_g()) {
-                        write_external_at(entry, ptr);
-                        return make_pair(true, true);
+
+            // first check in partition table
+            if (!enable_partitioning ||
+                partition_value == partition_table->get_value_from_ptr(ptr)) {
+                // read node from pointer
+                Entry node;
+                read_external_at(node, ptr);
+                if (node == entry) {
+                    if (reopen_closed) {
+                        if (entry.get_g() < node.get_g()) {
+                            write_external_at(entry, ptr);
+                            return make_pair(true, true);
+                        }
                     }
+                    return make_pair(true, false);
                 }
-                return make_pair(true, false);
             }
-            ptr = internal_closed.hash_find(hash_value, false);
+            // update pointer and resume while loop if partition values do not
+            // match or if hash collision
+            ptr = internal_closed.hash_find(entry.get_hash_value(), false);
         }
-        buffers[0].insert(entry);
-        if (buffers[0].size() == max_buffer_entries) flush_buffer();
-        // TODO:flush buffer if full here!
+        buffers[partition_value].insert(entry);
+        if (buffers[partition_value].size() == max_buffer_entries)
+            flush_buffer(partition_value);
 
         return make_pair(false, false);
     }
 
     template<class Entry>
-    void CompressClosedList<Entry>::flush_buffer() {
+    unsigned CompressClosedList<Entry>::get_partition_value(const Entry& entry) const {
+        return (*partition_hash)(entry) % n_partitions;
+    }
+
+    template<class Entry>
+    void CompressClosedList<Entry>::flush_buffer(size_t partition_value) {
         //cout << "FLUSH" << endl;
-        for (auto& node : buffers[0]) {
+        for (auto& node : buffers[partition_value]) {
             write_external_at(node, external_closed_index);
             
-            //auto hasher = hash<Entry>();
-            internal_closed.hash_insert(external_closed_index, hasher(node));
+            internal_closed.hash_insert(external_closed_index, node.get_hash_value());
             
             ++external_closed_index;
         }
-        buffers[0].clear();
+        if (enable_partitioning)
+            partition_table->insert_map_value(partition_value);
+        buffers[partition_value].clear();
     }
     
 
@@ -197,8 +210,9 @@ namespace compress_closed_list {
     trace_path(const Entry &entry) const {
         vector<const GlobalOperator *> path;
         Entry current_state = entry;
-        cout << "size of buffer is " << buffers[0].size() << endl;
+            
         while (true) {
+        startloop:
             if (current_state.get_creating_operator() == -1) {
                 assert(current_state.get_parent_state_id == StateID::no_state);
                 break;
@@ -210,20 +224,19 @@ namespace compress_closed_list {
                 &g_operators[current_state.get_creating_operator()];
             path.push_back(op);
 
-            // search buffer first
-            bool found_in_buffer = false;
-            for (auto &elem : buffers[0]) {
-                if (elem.get_state_id() == current_state.get_parent_state_id()) {
-                    current_state = elem;
-                    found_in_buffer = true;
-                    break;
+            // search buffer first [exhaustive search]
+            for (auto& buffer : buffers) {
+                for (auto& state : buffer) {
+                    if (state.get_state_id() == current_state.get_parent_state_id()) {
+                        current_state = state;
+                        goto startloop;
+                    }
                 }
             }
-            if (found_in_buffer) continue;
 
             // then look in hash tables
             cout << " looking in hash table" << endl;
-            Entry target = Entry::dummy;
+            Entry target;
             for (size_t i = 0; i < internal_closed.get_max_entries(); ++i) {
                 auto ptr = internal_closed.find(i);
                 if (!internal_closed.ptr_is_invalid(ptr)) {
@@ -267,6 +280,7 @@ namespace compress_closed_list {
     }
 
         static shared_ptr<ClosedListFactory> _parse(OptionParser &parser) {
+            // These are set in search_engines/search_common
         parser.document_synopsis("Compress closed list", "");
         parser.add_option<bool>(
                                 "reopen_closed",

@@ -16,17 +16,17 @@
 
 class MappingTable {
     std::vector<unsigned> table;
-    std::size_t flush_size; // size of each portion
+    std::size_t nodes_per_map; // size of each mapping
 public:
-    MappingTable(std::size_t flush_size) :
-	flush_size(flush_size) {}
+    MappingTable(std::size_t nodes_per_map) :
+        nodes_per_map(nodes_per_map) {}
 
-    void insert_value(unsigned value) {
-	table.push_back(value);
+    void insert_map_value(unsigned map_value) {
+	table.push_back(map_value);
     }
 
-    unsigned find_by_ptr(std::size_t ptr) const {
-	auto map_index = ptr / flush_size;
+    unsigned get_value_from_ptr(std::size_t ptr) const {
+	auto map_index = ptr / nodes_per_map;
 	assert(map_index < table.size());
 	return table[map_index];
     }

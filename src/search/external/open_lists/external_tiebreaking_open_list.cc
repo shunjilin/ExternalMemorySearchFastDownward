@@ -76,7 +76,7 @@ namespace external_tiebreaking_open_list {
     template<class Entry>
     Entry ExternalTieBreakingOpenList<Entry>::remove_min() {
         assert(size > 0);
-        Entry min_entry = Entry::dummy;
+        Entry min_entry;
 
         // tiebreak by lowest f value
         for (auto f_bucket = fg_buckets.begin();
