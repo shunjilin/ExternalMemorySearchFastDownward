@@ -3,36 +3,55 @@
 #include "globals.h"
 #include "state_id.h"
 #include "algorithms/int_packer.h"
+#include "external/hash_functions/zobrist.h"
+#include "utils/memory.h"
 
 #include <vector>
 #include <fstream>
 #include <cassert>
 #include <cstring>
 
-using PackedStateBin = int_packer::IntPacker::Bin;
-const GlobalState GlobalState::dummy = GlobalState(StateID::no_state);
+using namespace zobrist;
 
-// true value initialized on initial node generation
-std::size_t GlobalState::bytes_per_state = 0;
+
+// These will be initialized on the generation of the first node (lazily).
+// This limitation is due to the fact that information on state variables
+// is only available at runtime.
 std::size_t GlobalState::packedState_bytes = 0;
-    
+std::size_t GlobalState::bytes_per_state = 0;
+std::unique_ptr<ZobristHash<GlobalState> > GlobalState::hasher = nullptr;
+
+
+// Initialize memory information of states, as well as primary hash function used.
+// Should only be called after states have been packed by int_packer.
+void GlobalState::initialize_state_info() {
+    packedState_bytes = g_state_packer->get_num_bins() * sizeof(PackedStateBin);
+    bytes_per_state =
+        packedState_bytes +
+        sizeof(state_id) +
+        sizeof(parent_state_id) +
+        sizeof(creating_operator) +
+        sizeof(g);
+    hasher = utils::make_unique_ptr<ZobristHash<GlobalState> >();
+}
+
+GlobalState::GlobalState(const StateID state_id) : state_id(state_id) {}
+
+
+// 'Empty' states that can be used for copying.
+// This prevents unecessary increments and assigning of StateIDs to non-states.
+GlobalState::GlobalState() : GlobalState(StateID::no_state) {}
+
+
+// Assumes that this is used on the creation of initial state - i.e. is done
+// before any other GlobalState constructor is used - and therefore is in charge
+// of the initialization of static variables. Otherwise we would have to put
+// initialize_state_info() in other constructors as well.
 GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState) :
     packedState(packedState)
 {
-    if (!packedState_bytes) {
-        packedState_bytes = sizeof(packedState.front()) * packedState.size();
-    }
-    if (!bytes_per_state) {
-        bytes_per_state =  sizeof(packedState.front()) * packedState.size() +
-            sizeof(state_id) +
-            sizeof(parent_state_id) +
-            sizeof(creating_operator) +
-            sizeof(g);
-    }
+    if (!packedState_bytes || !bytes_per_state || !hasher) initialize_state_info();
 }
-
-// for dummy state that does not increment state id
-GlobalState::GlobalState(const StateID state_id) : state_id(state_id) {}
 
 GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState,
                          StateID parent_state_id,
@@ -127,6 +146,10 @@ void GlobalState::read(char* ptr) {
     memcpy(&creating_operator, ptr, sizeof(creating_operator));
     ptr += sizeof(creating_operator);
     memcpy(&g, ptr, sizeof(g));
+}
+
+size_t GlobalState::get_hash_value() const {
+    return (*hasher)(*this);
 }
 
 #else // ifndef EXTERNAL_SEARCH

@@ -5,8 +5,13 @@
 
 #include "algorithms/int_packer.h"
 #include "state_id.h"
+#include "external/hash_functions/zobrist.h"
 #include <vector>
 #include <fstream>
+#include <memory>
+
+using namespace zobrist;
+
 using PackedStateBin = int_packer::IntPacker::Bin;
 
 // GlobalState IS a node for external search purposes
@@ -17,10 +22,17 @@ class GlobalState {
     StateID parent_state_id = StateID::no_state;
     int creating_operator = -1;
     int g = 0;
+
+    void initialize_state_info();
+    
+    // Primary hash function to prevent unnecessary creation of hash function
+    // resources (bitstrings in the case of zobrist hash)
+    // Currently initialization in GlobalState constructor. Perhaps delegate
+    // initialization to search engine that actually needs it?
+    static std::unique_ptr<ZobristHash<GlobalState> > hasher;
+    GlobalState(StateID state_id);
  public:
-    static const GlobalState dummy;
-    GlobalState() = default;
-    GlobalState(StateID state_id); // for dummy state, package this into static function?
+    GlobalState();
     GlobalState(const std::vector<PackedStateBin> &packedState);
     GlobalState(const std::vector<PackedStateBin> &packedState,
                 StateID parent_state_id,
@@ -41,29 +53,20 @@ class GlobalState {
     bool read(std::fstream& file); // deserialize Globalstate
     void read(char* ptr); 
 
-    
-
-    static size_t bytes_per_state;
     static size_t packedState_bytes;
+    static size_t bytes_per_state;
+   
+    size_t get_hash_value() const;
 };
 
-// Specialize hash for std::unordered_map as it needs static hash function,
-// speed is not critical as it is in-memory hashing (bottleneck is IO).
-// Alternative is to create custom data structure for hashing, in order
-// to use runtime generated hash functions like zobrist hashing.
+// Specialize hash for hash tables, e.g. std::unordered_map 
 namespace std {
     template<> struct hash<GlobalState> {
         size_t operator()(const GlobalState &state) const {
-            auto &vec = state.get_packed_vec();
-            std::size_t seed = vec.size();
-            for (auto& i : vec ) {
-                seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            }
-            return seed;
+            return state.get_hash_value();
         }
     };
 }
-
 
 #else // ifndef EXTERNAL_SEARCH
 

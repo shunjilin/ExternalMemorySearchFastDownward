@@ -6,14 +6,12 @@
 #include <random>
 #include <limits>
 #include <vector>
-
-
+#include <iostream>
 
 namespace zobrist {
-    static size_t rand_seed = 0;
-    
     template<class Entry>
     class ZobristHash {
+        static size_t rand_seed;
         static std::mt19937_64 mt;
         static std::uniform_int_distribution<std::size_t> dis;
 
@@ -31,7 +29,10 @@ namespace zobrist {
     };
 
     template<class Entry>
-    std::mt19937_64 ZobristHash<Entry>::mt(rand_seed++); // different seed for different hashers
+    std::size_t ZobristHash<Entry>::rand_seed = 0;
+
+    template<class Entry>
+    std::mt19937_64 ZobristHash<Entry>::mt(rand_seed);
 
     template<class Entry>
     std::uniform_int_distribution<std::size_t>
@@ -53,9 +54,9 @@ namespace zobrist {
                 val = get_rand_bitstring();
             }
         }
-
         // Use of g_variable_domain creates dependency on globals.
         // Consider moving these to static values in Entry class?
+        // std::cout << "Initialized Zobrist Table" << std::endl;
     }
 
     template<class Entry>
