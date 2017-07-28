@@ -21,6 +21,8 @@ class GlobalState {
     StateID parent_state_id = StateID::no_state;
     int creating_operator = -1;
     int g = 0;
+    
+    size_t parent_hash_value = 0; 
 
     void initialize_state_info();
     
@@ -35,7 +37,8 @@ class GlobalState {
     GlobalState(const std::vector<PackedStateBin> &packedState,
                 StateID parent_state_id,
                 int creating_operator,
-                int g);
+                int g,
+                size_t parent_hash_value = 0);
     std::vector<int> get_values() const;
     int operator[](int var) const;
     bool operator==(const GlobalState &other) const;
@@ -50,20 +53,22 @@ class GlobalState {
     void write(char* ptr) const;
     bool read(std::fstream& file); // deserialize Globalstate
     void read(char* ptr); 
-   
+
+    // if hash not initialized, returns 0
     size_t get_hash_value() const;
+    size_t get_parent_hash_value() const;
     
     static size_t packedState_bytes;
     static size_t bytes_per_state;
 
     static void initialize_hash_function(std::unique_ptr<StateHash<GlobalState> > hash_function);
+    
 };
 
 
 // Specialize hash for hash tables, e.g. std::unordered_map 
 namespace std {
     template<> struct hash<GlobalState> {
-        // TODO: check if hash function is initialized
         size_t operator()(const GlobalState &state) const {
             return state.get_hash_value();
         }

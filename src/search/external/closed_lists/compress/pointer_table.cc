@@ -64,7 +64,7 @@ void PointerTable::hash_insert(std::size_t pointer, std::size_t hash_value) {
 // single hash
 // return ptr
 size_t PointerTable::hash_find(size_t hash_value,
-                               bool first_probe) {
+                               bool first_probe) const {
     if (first_probe) {
 	current_probe_index = hash_value % max_entries;
     } else {

@@ -220,7 +220,7 @@ namespace compress_closed_list {
         Entry current_state = entry;
             
         while (true) {
-        startloop:
+            startloop:
             if (current_state.get_creating_operator() == -1) {
                 assert(current_state.get_parent_state_id == StateID::no_state);
                 break;
@@ -231,6 +231,30 @@ namespace compress_closed_list {
             const GlobalOperator *op =
                 &g_operators[current_state.get_creating_operator()];
             path.push_back(op);
+            // first look in buffers
+            for (auto& buffer : buffers) {
+                for (auto& node: buffer) {
+                    if (node.get_state_id()  == current_state.get_parent_state_id()) {
+                        current_state = node;
+                        goto startloop;
+                    }
+                }
+            }
+            // Then look in hash tables
+            auto ptr = internal_closed.hash_find(current_state.get_parent_hash_value());
+            while (!internal_closed.ptr_is_invalid(ptr)) {
+                // read node from pointer
+                Entry node;
+                read_external_at(node, ptr);
+                if (node.get_state_id() == current_state.get_parent_state_id()) {
+                    current_state = node;
+                    break;
+                }
+                // update pointer and resume while loop if partition values do not
+                // match or if hash collision
+                ptr = internal_closed.hash_find(current_state.get_parent_hash_value(), false);
+            }
+        }/*
 
             // search buffer first [exhaustive search]
             for (auto& buffer : buffers) {
@@ -244,7 +268,18 @@ namespace compress_closed_list {
 
             // then look in hash tables
             cout << " looking in hash table" << endl;
+            
             Entry target;
+            auto ptr = internal_closed.hash_find(current_state.get_parent_hash_value());
+            while (!internal_closed.is_invalid(ptr)) {
+                partition_value = 
+                 // first check in partition table
+                if (!enable_partitioning ||
+                    partition_value == partition_table->get_value_from_ptr(ptr)) {
+                    
+                
+            }
+            
             for (size_t i = 0; i < internal_closed.get_max_entries(); ++i) {
                 auto ptr = internal_closed.find(i);
                 if (!internal_closed.ptr_is_invalid(ptr)) {
@@ -255,7 +290,7 @@ namespace compress_closed_list {
                     }
                 }
             }
-        }
+            }*/
         reverse(path.begin(), path.end());
         return path;
     }

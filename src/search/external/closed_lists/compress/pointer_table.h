@@ -16,7 +16,7 @@ class PointerTable {
     size_t max_entries; // max # of pointers in table
     vector<bool> bit_vector;
     const size_t invalid_ptr; // value of unset pointer (bools all set to true)
-    size_t current_probe_index; // for hashing
+    mutable size_t current_probe_index; // for hashing
 
     size_t get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const;
 
@@ -26,13 +26,13 @@ class PointerTable {
 
     size_t find(size_t index) const; // change to [] operator?
 
-    bool ptr_is_invalid(size_t ptr) const;
+    bool ptr_is_invalid(size_t ptr) const; // perhaps change this to non-member function?
 
     void insert(size_t ptr, size_t index);
 
     void hash_insert(size_t pointer, size_t hash_value);
 
-    size_t hash_find(size_t hash_value, bool first_probe=true);
+    size_t hash_find(size_t hash_value, bool first_probe=true) const;
 
     size_t get_n_entries() const;
 

@@ -30,7 +30,8 @@ void GlobalState::initialize_state_info() {
         sizeof(state_id) +
         sizeof(parent_state_id) +
         sizeof(creating_operator) +
-        sizeof(g);
+        sizeof(g) +
+        sizeof(parent_hash_value);
 }
 
 GlobalState::GlobalState(const StateID state_id) : state_id(state_id) {}
@@ -54,11 +55,14 @@ GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState) :
 GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState,
                          StateID parent_state_id,
                          int creating_operator,
-                         int g)
+                         int g,
+                         size_t parent_hash_value)
     : packedState(packedState),
       parent_state_id(parent_state_id),
       creating_operator(creating_operator),
-      g(g) {}
+      g(g),
+      parent_hash_value(parent_hash_value)
+{}
     
 std::vector<int> GlobalState::get_values() const {
     int num_variables = g_initial_state_data.size();
@@ -101,11 +105,11 @@ int GlobalState::get_g() const {
 bool GlobalState::write(std::fstream& file) const {
     file.write(reinterpret_cast<const char *>
                (&packedState.front()), packedState_bytes);
-    
     file.write(reinterpret_cast<const char *>(&state_id), sizeof(state_id));
     file.write(reinterpret_cast<const char *>(&parent_state_id), sizeof(parent_state_id));
     file.write(reinterpret_cast<const char *>(&creating_operator), sizeof(creating_operator));
     file.write(reinterpret_cast<const char *>(&g), sizeof(g));
+    file.write(reinterpret_cast<const char *>(&parent_hash_value), sizeof(parent_hash_value));
     return !file.fail();
 }
 
@@ -119,6 +123,9 @@ void GlobalState::write(char* ptr) const {
     memcpy(ptr, &creating_operator, sizeof(creating_operator));
     ptr += sizeof(creating_operator);
     memcpy(ptr, &g, sizeof(g));
+    ptr += sizeof(g);
+    memcpy(ptr, &parent_hash_value, sizeof(parent_hash_value));
+    
 }
 
 bool GlobalState::read(std::fstream& file) {
@@ -129,7 +136,7 @@ bool GlobalState::read(std::fstream& file) {
     file.read(reinterpret_cast<char *>(&parent_state_id), sizeof(parent_state_id));
     file.read(reinterpret_cast<char *>(&creating_operator), sizeof(creating_operator));
     file.read(reinterpret_cast<char *>(&g), sizeof(g));
-
+    file.read(reinterpret_cast<char *>(&parent_hash_value), sizeof(parent_hash_value));
     return !file.fail();
 }
 
@@ -144,10 +151,19 @@ void GlobalState::read(char* ptr) {
     memcpy(&creating_operator, ptr, sizeof(creating_operator));
     ptr += sizeof(creating_operator);
     memcpy(&g, ptr, sizeof(g));
+    ptr+= sizeof(g);
+    memcpy(&parent_hash_value, ptr, sizeof(parent_hash_value));
 }
 
 size_t GlobalState::get_hash_value() const {
-    return (*hasher)(*this);
+    if (hasher != nullptr) {
+        return (*hasher)(*this);
+    }
+    return 0;
+}
+
+size_t GlobalState::get_parent_hash_value() const {
+    return parent_hash_value;
 }
 
 void GlobalState::

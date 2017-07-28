@@ -65,13 +65,16 @@ get_successor_state(const GlobalState &predecessor, const GlobalOperator *op) {
             state_packer.set(&buffer[0], effect.var, effect.val);
     }
     axiom_evaluator.evaluate(&buffer[0], state_packer);
+
+    auto parent_hash_value = predecessor.get_hash_value();
     // seems costly to copy buffer each time in constructor
     // TODO:: use move semantics for buffer
     return GlobalState(buffer,
                        predecessor.get_state_id(),
                        get_op_index_hacked(op),
                        predecessor.get_g() +
-                       get_adjusted_action_cost(*op, cost_type));
+                       get_adjusted_action_cost(*op, cost_type),
+                       parent_hash_value);
 }
 
 int StateRegistry::get_state_size_in_bytes() const {
