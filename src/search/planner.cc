@@ -5,6 +5,10 @@
 #include "utils/system.h"
 #include "utils/timer.h"
 
+#ifdef EXTERNAL_SEARCH
+#include "external/utils/wall_timer.h"
+#endif
+
 
 #include <iostream>
 
@@ -13,13 +17,6 @@ using utils::ExitCode;
 
 int main(int argc, const char **argv) {
 
-#ifdef EXTERNAL_SEARCH
-std::cout << "EXTERNAL_SEARCH is defined " << std::endl;
-#endif
-
-#ifndef EXTERNAL_SEARCH
-std::cout << "EXTERNAL SEARCH is not defined" << std::endl;
-#endif
     utils::register_event_handlers();
 
     if (argc < 2) {
@@ -47,15 +44,28 @@ std::cout << "EXTERNAL SEARCH is not defined" << std::endl;
         utils::exit_with(ExitCode::INPUT_ERROR);
     }
 
+#ifdef EXTERNAL_SEARCH
+    auto search_wall_timer = utils::WallTimer();
+#endif
     utils::Timer search_timer;
     engine->search();
     search_timer.stop();
     utils::g_timer.stop();
+#ifdef EXTERNAL_SEARCH
+utils::overall_wall_timer.stop();
+    search_wall_timer.stop();
+#endif
 
     engine->save_plan_if_necessary();
     engine->print_statistics();
     cout << "Search time: " << search_timer << endl;
     cout << "Total time: " << utils::g_timer << endl;
+
+#ifdef EXTERNAL_SEARCH
+    cout << "Search time (wall clock): " << search_wall_timer << endl;
+cout << "Total time (wall clock): " << utils::overall_wall_timer << endl;
+#endif
+
 
     if (engine->found_solution()) {
         utils::exit_with(ExitCode::PLAN_FOUND);

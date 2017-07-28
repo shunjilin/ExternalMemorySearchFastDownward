@@ -118,6 +118,7 @@ fast_downward_plugin(
         external/closed_list_factory
         external/file_utility
         external/hash_functions/zobrist
+        external/utils/wall_timer
         #external/closed_lists/compress_closed_list
         #external/search_engines/lazy_search
         
