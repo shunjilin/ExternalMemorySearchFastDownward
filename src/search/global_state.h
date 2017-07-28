@@ -5,14 +5,13 @@
 
 #include "algorithms/int_packer.h"
 #include "state_id.h"
-#include "external/hash_functions/zobrist.h"
+#include "external/hash_functions/state_hash.h"
 #include <vector>
 #include <fstream>
 #include <memory>
 
-using namespace zobrist;
-
 using PackedStateBin = int_packer::IntPacker::Bin;
+using namespace statehash;
 
 // GlobalState IS a node for external search purposes
 
@@ -27,9 +26,8 @@ class GlobalState {
     
     // Primary hash function to prevent unnecessary creation of hash function
     // resources (bitstrings in the case of zobrist hash)
-    // Currently initialization in GlobalState constructor. Perhaps delegate
-    // initialization to search engine that actually needs it?
-    static std::unique_ptr<ZobristHash<GlobalState> > hasher;
+    // Initialization delegated to class that needs it, e.g. closed list
+    static std::unique_ptr<StateHash<GlobalState> > hasher;
     GlobalState(StateID state_id);
  public:
     GlobalState();
@@ -52,16 +50,20 @@ class GlobalState {
     void write(char* ptr) const;
     bool read(std::fstream& file); // deserialize Globalstate
     void read(char* ptr); 
-
-    static size_t packedState_bytes;
-    static size_t bytes_per_state;
    
     size_t get_hash_value() const;
+    
+    static size_t packedState_bytes;
+    static size_t bytes_per_state;
+
+    static void initialize_hash_function(std::unique_ptr<StateHash<GlobalState> > hash_function);
 };
+
 
 // Specialize hash for hash tables, e.g. std::unordered_map 
 namespace std {
     template<> struct hash<GlobalState> {
+        // TODO: check if hash function is initialized
         size_t operator()(const GlobalState &state) const {
             return state.get_hash_value();
         }

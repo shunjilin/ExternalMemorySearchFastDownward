@@ -8,9 +8,11 @@
 #include <vector>
 #include <iostream>
 
-namespace zobrist {
+#include "state_hash.h"
+
+namespace statehash {
     template<class Entry>
-    class ZobristHash {
+    class ZobristHash : public StateHash<Entry> {
         static size_t rand_seed;
         static std::mt19937_64 mt;
         static std::uniform_int_distribution<std::size_t> dis;
@@ -19,13 +21,13 @@ namespace zobrist {
 
         std::vector< std::vector<size_t> > table;
         
-        public:
+    public:
         ZobristHash();
-        //~ZobristHash() = default;
+        
         //ZobristHash(const ZobristHash& other) = delete;
         //ZobristHash& operator=(const ZobristHash& other) = delete;
         
-        std::size_t operator()(const Entry& entry) const; // hash value
+        std::size_t operator()(const Entry& entry) const override; // hash value
     };
 
     template<class Entry>
@@ -72,6 +74,5 @@ namespace zobrist {
         }
         return hash_value;
     }
-
 }
 #endif

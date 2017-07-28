@@ -8,6 +8,7 @@
 #include "../../../global_operator.h"
 #include "../../../utils/memory.h"
 #include "../../../globals.h"
+#include "../../hash_functions/state_hash.h"
 #include "../../hash_functions/zobrist.h"
 
 #include <vector>
@@ -22,7 +23,7 @@
 #include <fcntl.h>
 
 using namespace std;
-using namespace zobrist;
+using namespace statehash;
 
 using found = bool;
 using reopened = bool;
@@ -37,7 +38,7 @@ namespace compress_closed_list {
 
         // for compress with partitioning
         unique_ptr<MappingTable> partition_table;
-        unique_ptr<ZobristHash<Entry> > partition_hash;
+        unique_ptr<StateHash<Entry> > partition_hash;
         unsigned n_partitions = 100;
 
         
@@ -63,7 +64,7 @@ namespace compress_closed_list {
         explicit CompressClosedList(const Options &opts);
         virtual ~CompressClosedList() override = default;
 
-        virtual std::pair<found, reopened> find_insert(const Entry &entry) override;
+        virtual pair<found, reopened> find_insert(const Entry &entry) override;
         virtual vector<const GlobalOperator*> trace_path(const Entry &entry)
             const override;
     };
@@ -79,13 +80,20 @@ namespace compress_closed_list {
     initialize(size_t entry_size_in_bytes) {
         // set max buffer entries
         max_buffer_entries = max_buffer_size_in_bytes / entry_size_in_bytes;
+
+        // initialize primary hash
+        // TODO: select hash functions from options
+        Entry::initialize_hash_function(utils::make_unique_ptr<ZobristHash<Entry> >());
         
         // initialize partition table
         if (enable_partitioning) {
             partition_table =
                 utils::make_unique_ptr<MappingTable>(max_buffer_entries);
+            // TODO: select hash functions from options
+
             partition_hash =
                 utils::make_unique_ptr<ZobristHash<Entry> >();
+           
             buffers.resize(n_partitions);
         } else {
             buffers.resize(1); // use only buffers[0] if no partitioning
@@ -127,7 +135,7 @@ namespace compress_closed_list {
     }
 
     template<class Entry>
-    std::pair<found, reopened> CompressClosedList<Entry>::
+    pair<found, reopened> CompressClosedList<Entry>::
     find_insert(const Entry &entry) {
         
         if (!initialized) {

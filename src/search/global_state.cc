@@ -3,23 +3,22 @@
 #include "globals.h"
 #include "state_id.h"
 #include "algorithms/int_packer.h"
-#include "external/hash_functions/zobrist.h"
 #include "utils/memory.h"
+#include "external/hash_functions/state_hash.h"
 
 #include <vector>
 #include <fstream>
 #include <cassert>
 #include <cstring>
+#include <memory>
 
-using namespace zobrist;
-
+std::unique_ptr<StateHash<GlobalState> > GlobalState::hasher = nullptr;
 
 // These will be initialized on the generation of the first node (lazily).
 // This limitation is due to the fact that information on state variables
 // is only available at runtime.
 std::size_t GlobalState::packedState_bytes = 0;
 std::size_t GlobalState::bytes_per_state = 0;
-std::unique_ptr<ZobristHash<GlobalState> > GlobalState::hasher = nullptr;
 
 
 // Initialize memory information of states, as well as primary hash function used.
@@ -32,7 +31,6 @@ void GlobalState::initialize_state_info() {
         sizeof(parent_state_id) +
         sizeof(creating_operator) +
         sizeof(g);
-    hasher = utils::make_unique_ptr<ZobristHash<GlobalState> >();
 }
 
 GlobalState::GlobalState(const StateID state_id) : state_id(state_id) {}
@@ -150,6 +148,11 @@ void GlobalState::read(char* ptr) {
 
 size_t GlobalState::get_hash_value() const {
     return (*hasher)(*this);
+}
+
+void GlobalState::
+initialize_hash_function(std::unique_ptr<StateHash<GlobalState> > hash_function) {
+    hasher = std::move(hash_function);
 }
 
 #else // ifndef EXTERNAL_SEARCH
