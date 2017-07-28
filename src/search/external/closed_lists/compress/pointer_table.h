@@ -19,14 +19,13 @@ class PointerTable {
     mutable size_t current_probe_index; // for hashing
 
     size_t get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const;
-
-    
- public:
+        
+public:
     PointerTable(std::size_t ptr_table_size_in_bytes);
 
     size_t find(size_t index) const; // change to [] operator?
 
-    bool ptr_is_invalid(size_t ptr) const; // perhaps change this to non-member function?
+    bool ptr_is_invalid(size_t ptr) const;
 
     void insert(size_t ptr, size_t index);
 
@@ -43,7 +42,5 @@ class PointerTable {
     size_t get_ptr_size_in_bits() const;
 
 };
-
-    
 
 #endif
