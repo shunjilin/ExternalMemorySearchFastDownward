@@ -113,4 +113,9 @@ size_t PointerTable::get_ptr_size_in_bits() const {
     return ptr_size_in_bits;
 }
 
+double PointerTable::get_load_factor() const {
+    return static_cast<double>(get_n_entries()) /
+        static_cast<double>(get_max_entries());
+}
+
 

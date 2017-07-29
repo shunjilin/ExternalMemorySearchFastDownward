@@ -41,6 +41,7 @@ public:
 
     size_t get_ptr_size_in_bits() const;
 
+    double get_load_factor() const;
 };
 
 #endif

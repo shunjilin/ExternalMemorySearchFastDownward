@@ -71,6 +71,8 @@ namespace compress_closed_list {
         // as the os is in charge of caching and paging in and out
         mutable size_t good_probes = 0;
         mutable size_t bad_probes = 0;
+
+        void print_initial_statistics() const;
                 
     public:
         explicit CompressClosedList(const Options &opts);
@@ -145,12 +147,18 @@ namespace compress_closed_list {
         enable_partitioning(opts.get<bool>("enable_partitioning")),
         internal_closed(opts.get<double>("internal_closed_gb") * pow(1024, 3)) 
     {
-        // TODO: remove or refactor into some sort of print_statistics function
-        cout << internal_closed.get_max_size_in_bytes() << " EXTERNAL CLOSED LIST SIZE IN BYTES" << endl;
-        cout << "max entries of closed list is " << internal_closed.get_max_entries() << endl;
-        cout << "size of pointer in bits is " << internal_closed.get_ptr_size_in_bits() << endl;
+        print_initial_statistics();
     }
 
+    template<class Entry>
+    void CompressClosedList<Entry>::print_initial_statistics() const {
+        cout << "Using compress closed list ";
+        if (enable_partitioning)
+            cout << "with " << n_partitions << " partitions";
+        cout << ".\n";
+        cout << "Closed list max entries: " << internal_closed.get_max_entries()
+             << endl;
+    }
     template<class Entry>
     pair<found, reopened> CompressClosedList<Entry>::
     find_insert(const Entry &entry) {
@@ -304,8 +312,13 @@ namespace compress_closed_list {
 
     template<class Entry>
     void CompressClosedList<Entry>::print_statistics() const {
-        cout << "Successful probes into external closed list: " << good_probes
-             << "\nUnsuccessful probes into external closed list: "
+        cout << "Size of a node: " << Entry::bytes_per_state << " bytes\n";
+        cout << "Number of entries in the closed list at the end of search : "
+             << internal_closed.get_n_entries() << "\n";
+        cout << "Load factor of the closed list at the end of search : "
+             << internal_closed.get_load_factor() << "\n";
+        cout << "Successful probes into the closed list (includes buffer hits): " << good_probes
+             << "\nUnsuccessful probes into the closed list: "
              << bad_probes << endl;
     }
 
