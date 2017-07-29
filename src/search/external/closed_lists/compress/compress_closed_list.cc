@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace statehash;
@@ -47,6 +48,7 @@ namespace compress_closed_list {
         int external_closed_fd;
         char *external_closed;
         size_t external_closed_index = 0;
+        size_t external_closed_bytes = 0; // total size in nodes of external table
 
         size_t max_buffer_size_in_bytes = 4096; // 4kb
         size_t max_buffer_entries;
@@ -113,18 +115,19 @@ namespace compress_closed_list {
         }
         
         // initialize external closed list
-        auto external_closed_bytes =
+        external_closed_bytes =
             internal_closed.get_max_entries() * entry_size_in_bytes;
         cout << "external closed bytes " << external_closed_bytes << endl;
 
         // initialize external closed list
-        external_closed_fd = open("closed.bucket", O_CREAT | O_TRUNC | O_RDWR,
+        external_closed_fd = open("closed_list.bucket", O_CREAT | O_TRUNC | O_RDWR,
                                   S_IRUSR | S_IWUSR);
         if (external_closed_fd < 0)
             throw IOException("Fail to create closed list file");
         
         if (fallocate(external_closed_fd, 0, 0, external_closed_bytes) < 0)
             throw IOException("Fail to fallocate closed list file");
+        
         external_closed =
             static_cast<char *>(mmap(NULL, external_closed_bytes,
                                      PROT_READ | PROT_WRITE, MAP_SHARED, // what happens if use MAP_PRIVATE?
@@ -288,6 +291,16 @@ namespace compress_closed_list {
         entry.write(static_cast<char *>
                     (external_closed + index * Entry::bytes_per_state));
     }
+
+    template<class Entry>
+    void CompressClosedList<Entry>::clear() {
+        // Let errors go in clear() as we do not want termination at the end of
+        // search, and clean up of files is non-critical
+        munmap(external_closed, external_closed_bytes);
+        close(external_closed_fd);
+        remove("closed_list.bucket");
+    }
+    
 
     template<class Entry>
     void CompressClosedList<Entry>::print_statistics() const {

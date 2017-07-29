@@ -7,6 +7,7 @@
 #include "../../utils/memory.h"
 
 #include "../file_utility.h"
+#include "../options/errors.h"
 
 #include <utility>
 #include <map>
@@ -16,7 +17,7 @@
 // for constructing directory
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <unistd.h>
 using namespace std;
 
 namespace external_tiebreaking_open_list {
@@ -68,8 +69,8 @@ namespace external_tiebreaking_open_list {
         auto g = entry.get_g();
 
         if (!exists_bucket(f, g)) create_bucket(f, g);
-        // do check?
-        entry.write(fg_buckets[f][g]);
+        if (!entry.write(fg_buckets[f][g]))
+            throw IOException("Fail to write state to fstream.");
         ++size;
     }
 
@@ -119,6 +120,8 @@ namespace external_tiebreaking_open_list {
     void ExternalTieBreakingOpenList<Entry>::clear() {
         fg_buckets.clear();
         size = 0;
+        // remove empty directory, this fails if directory is not empty
+        rmdir("open_list_buckets");
     }
 
     template<class Entry>
