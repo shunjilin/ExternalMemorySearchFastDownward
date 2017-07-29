@@ -14,7 +14,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_set>
-#include <exception>
+#include <exception> // remove?
 #include <cmath> // for pow
 
 #include <sys/mman.h>
@@ -51,7 +51,7 @@ namespace compress_closed_list {
         size_t max_buffer_entries;
 
         bool initialized = false; // lazy initialization
-
+        
         unsigned get_partition_value(const Entry &entry) const;
         
         void flush_buffer(size_t partition_value);
@@ -59,6 +59,15 @@ namespace compress_closed_list {
 
         void read_external_at(Entry& entry, size_t index) const;
         void write_external_at(const Entry& entry, size_t index);
+
+        // probe statistics, does not include probes for path reconstruction
+        // Good probes: successful probes into buffer or external closed list
+        // Bad probes: unsuccessful probes into external closed list
+        // Note: The inclusion of buffer hits is because there is no
+        // straightforward way of distinguishing memory access from disc access,
+        // as the os is in charge of caching and paging in and out
+        mutable size_t good_probes = 0;
+        mutable size_t bad_probes = 0;
                 
     public:
         explicit CompressClosedList(const Options &opts);
@@ -67,6 +76,9 @@ namespace compress_closed_list {
         virtual pair<found, reopened> find_insert(const Entry &entry) override;
         virtual vector<const GlobalOperator*> trace_path(const Entry &entry)
             const override;
+
+        void clear();
+        void print_statistics() const;
     };
 
     /*                                                                      \
@@ -129,6 +141,7 @@ namespace compress_closed_list {
         enable_partitioning(opts.get<bool>("enable_partitioning")),
         internal_closed(opts.get<double>("internal_closed_gb") * pow(1024, 3)) 
     {
+        // TODO: remove or refactor into some sort of print_statistics function
         cout << internal_closed.get_max_size_in_bytes() << " EXTERNAL CLOSED LIST SIZE IN BYTES" << endl;
         cout << "max entries of closed list is " << internal_closed.get_max_entries() << endl;
         cout << "size of pointer in bits is " << internal_closed.get_ptr_size_in_bits() << endl;
@@ -151,6 +164,7 @@ namespace compress_closed_list {
         
         auto buffer_it = buffer.find(entry);
         if (buffer_it != buffer.end()) {
+            ++good_probes;
             if (reopen_closed) {
                 if (entry.get_g() < buffer_it->get_g()) {
                     buffer.erase(buffer_it);
@@ -172,6 +186,7 @@ namespace compress_closed_list {
                 Entry node;
                 read_external_at(node, ptr);
                 if (node == entry) {
+                    ++good_probes;
                     if (reopen_closed) {
                         if (entry.get_g() < node.get_g()) {
                             write_external_at(entry, ptr);
@@ -180,6 +195,7 @@ namespace compress_closed_list {
                     }
                     return make_pair(true, false);
                 }
+                ++bad_probes;
             }
             // update pointer and resume while loop if partition values do not
             // match or if hash collision
@@ -254,43 +270,7 @@ namespace compress_closed_list {
                 // match or if hash collision
                 ptr = internal_closed.hash_find(current_state.get_parent_hash_value(), false);
             }
-        }/*
-
-            // search buffer first [exhaustive search]
-            for (auto& buffer : buffers) {
-                for (auto& state : buffer) {
-                    if (state.get_state_id() == current_state.get_parent_state_id()) {
-                        current_state = state;
-                        goto startloop;
-                    }
-                }
-            }
-
-            // then look in hash tables
-            cout << " looking in hash table" << endl;
-            
-            Entry target;
-            auto ptr = internal_closed.hash_find(current_state.get_parent_hash_value());
-            while (!internal_closed.is_invalid(ptr)) {
-                partition_value = 
-                 // first check in partition table
-                if (!enable_partitioning ||
-                    partition_value == partition_table->get_value_from_ptr(ptr)) {
-                    
-                
-            }
-            
-            for (size_t i = 0; i < internal_closed.get_max_entries(); ++i) {
-                auto ptr = internal_closed.find(i);
-                if (!internal_closed.ptr_is_invalid(ptr)) {
-                    read_external_at(target, ptr);
-                    if (target.get_state_id() == current_state.get_parent_state_id()) {
-                        current_state = target;
-                        break;
-                    }
-                }
-            }
-            }*/
+        }
         reverse(path.begin(), path.end());
         return path;
     }
@@ -309,6 +289,13 @@ namespace compress_closed_list {
     write_external_at(const Entry& entry, size_t index) {
         entry.write(static_cast<char *>
                     (external_closed + index * Entry::bytes_per_state));
+    }
+
+    template<class Entry>
+    void CompressClosedList<Entry>::print_statistics() const {
+        cout << "Successful probes into external closed list: " << good_probes
+             << "\nUnsuccessful probes into external closed list: "
+             << bad_probes << endl;
     }
 
     CompressClosedListFactory::

@@ -88,6 +88,7 @@ namespace lazy_search {
     
     void LazySearch::print_statistics() const {
         statistics.print_detailed_statistics();
+        closed_list->print_statistics();
         //search_space.print_statistics();
     }
 
@@ -180,7 +181,7 @@ namespace lazy_search {
             }
 
             GlobalState state = open_list->remove_min();
-
+            update_f_value_statistics(state);
             return make_pair(state, true);
         }
     }

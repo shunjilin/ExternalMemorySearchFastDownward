@@ -1,6 +1,7 @@
 #ifndef EXTERNAL_CLOSED_LIST_H
 #define EXTERNAL_CLOSED_LIST_H
 
+#include <iostream>
 #include <utility>
 #include "../global_state.h"
 #include "../global_operator.h"
@@ -17,6 +18,7 @@ class ClosedList {
     virtual std::pair<found, reopened> find_insert(const Entry &entry) = 0;
     virtual std::vector<const GlobalOperator *>
         trace_path(const Entry &entry) const = 0;
+    virtual void print_statistics() const;
 };
 
 using StateClosedListEntry = GlobalState;
@@ -27,5 +29,9 @@ ClosedList<Entry>::ClosedList(bool reopen_closed)
 : reopen_closed(reopen_closed) {
 }
 
+template<class Entry>
+void ClosedList<Entry>::print_statistics() const {
+    // print nothing if no statistics
+}
 
 #endif
