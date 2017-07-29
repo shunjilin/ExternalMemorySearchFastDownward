@@ -88,22 +88,23 @@ size_t PointerTable::get_max_size_in_bytes() const {
     return bit_vector.size() / 8;
 }
 
+
+//TODO IMPORTANT!: Need to optimize this. Make sure that increasing pointer size
+// leads to ability to access bigger hash table, as sometimes the space constraint
+// leads to smaller access sizes! Assume user input is Hard Limit
+
 // get the size of a pointer (in bits)  given the size of
 // the pointer table in bytes
 // conservative estimate, rounds down
 size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const {
     size_t ptr_size_in_bits = 0;
     auto max_ptr_bits = size_t_bits;
-    for (std::size_t ptr_sz = 8; ptr_sz < max_ptr_bits; ++ptr_sz) {
+    for (std::size_t ptr_sz = 0; ptr_sz < max_ptr_bits; ++ptr_sz) {
 	std::size_t total_ptr_table_bits = ptr_sz * pow(2, ptr_sz);
 	if (total_ptr_table_bits >= (ptr_table_size_in_bytes * CHAR_BIT)) {
 	    ptr_size_in_bits = ptr_sz;
 	    break;
 	}
-    }
-    if (ptr_size_in_bits < 8) {
-        cerr << "pointer table too small" << endl;
-	//throw std::runtime_error(std::string("Not enough memory for pointer table."));
     }
     return ptr_size_in_bits;
 }

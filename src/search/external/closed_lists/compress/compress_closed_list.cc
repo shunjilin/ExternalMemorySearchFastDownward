@@ -10,6 +10,7 @@
 #include "../../../globals.h"
 #include "../../hash_functions/state_hash.h"
 #include "../../hash_functions/zobrist.h"
+#include "../../options/errors.h"
 
 #include <vector>
 #include <memory>
@@ -55,7 +56,7 @@ namespace compress_closed_list {
         unsigned get_partition_value(const Entry &entry) const;
         
         void flush_buffer(size_t partition_value);
-        bool initialize(size_t entry_size_in_bytes);
+        void initialize(size_t entry_size_in_bytes);
 
         void read_external_at(Entry& entry, size_t index) const;
         void write_external_at(const Entry& entry, size_t index);
@@ -88,7 +89,7 @@ namespace compress_closed_list {
     | that might lead to an unnecessary dependency.                         |
     \======================================================================*/
     template<class Entry>
-    bool CompressClosedList<Entry>::
+    void CompressClosedList<Entry>::
     initialize(size_t entry_size_in_bytes) {
         // set max buffer entries
         max_buffer_entries = max_buffer_size_in_bytes / entry_size_in_bytes;
@@ -119,19 +120,19 @@ namespace compress_closed_list {
         // initialize external closed list
         external_closed_fd = open("closed.bucket", O_CREAT | O_TRUNC | O_RDWR,
                                   S_IRUSR | S_IWUSR);
-        if (external_closed_fd < 0) return false;
+        if (external_closed_fd < 0)
+            throw IOException("Fail to create closed list file");
+        
         if (fallocate(external_closed_fd, 0, 0, external_closed_bytes) < 0)
-            return false;
+            throw IOException("Fail to fallocate closed list file");
         external_closed =
             static_cast<char *>(mmap(NULL, external_closed_bytes,
                                      PROT_READ | PROT_WRITE, MAP_SHARED, // what happens if use MAP_PRIVATE?
                                      external_closed_fd, 0));
         if (external_closed == MAP_FAILED)
-            return false;
+            throw IOException("Fail to mmap closed list file");
 
         initialized = true;
-        
-        return true;
     }
 
 
@@ -151,10 +152,7 @@ namespace compress_closed_list {
     pair<found, reopened> CompressClosedList<Entry>::
     find_insert(const Entry &entry) {
         
-        if (!initialized) {
-            if (!initialize(Entry::bytes_per_state)) throw; // todo: modify and handle this in search engine
-            initialized = true;
-        }
+        if (!initialized) initialize(Entry::bytes_per_state);
         
         // First look in buffer
         auto partition_value =

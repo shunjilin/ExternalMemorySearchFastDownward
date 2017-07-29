@@ -7,6 +7,7 @@
 
 #ifdef EXTERNAL_SEARCH
 #include "external/utils/wall_timer.h"
+#include <stdexcept>
 #endif
 
 
@@ -48,7 +49,16 @@ int main(int argc, const char **argv) {
     auto search_wall_timer = utils::WallTimer();
 #endif
     utils::Timer search_timer;
-    engine->search();
+#ifdef EXTERNAL_SEARCH
+    try {
+#endif
+        engine->search();
+#ifdef EXTERNAL_SEARCH
+    } catch (const runtime_error&error) {
+        cout << "Runtime Error: " << error.what() << endl;
+        utils::exit_with(ExitCode::CRITICAL_ERROR);
+    }
+#endif
     search_timer.stop();
     utils::g_timer.stop();
 #ifdef EXTERNAL_SEARCH
