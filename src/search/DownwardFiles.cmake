@@ -166,13 +166,13 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
-  NAME COMPRESS_CLOSED_LIST
-  HELP "Compress closed list"
-  SOURCES
-      external/closed_lists/compress/compress_closed_list
-      external/closed_lists/compress/mapping_table
-      external/closed_lists/compress/pointer_table
-  DEPENDENCY ONLY
+    NAME COMPRESS_CLOSED_LIST
+    HELP "Compress closed list"
+    SOURCES
+        external/closed_lists/compress/compress_closed_list
+        external/closed_lists/compress/mapping_table
+        external/closed_lists/compress/pointer_table
+    DEPENDENCY_ONLY
 )
 # END OF EXTERNAL SEARCH PLUGINS
 
