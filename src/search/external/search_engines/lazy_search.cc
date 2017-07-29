@@ -118,7 +118,7 @@ namespace lazy_search {
         
         vector<OperatorID> applicable_ops;
         g_successor_generator->generate_applicable_ops(s, applicable_ops);
-
+        
         /*
           TODO: When preferred operators are in use, a preferred operator will be
           considered by the preferred operator queues even when it is pruned.
@@ -130,6 +130,7 @@ namespace lazy_search {
         ordered_set::OrderedSet<OperatorID> preferred_operators =
             collect_preferred_operators(eval_context, preferred_operator_heuristics);
 
+        statistics.inc_expanded();
         for (OperatorID op_id : applicable_ops) {
             const GlobalOperator *op = &g_operators[op_id.get_index()];
             /*if ((node.get_real_g() + op->get_cost()) >= bound)
