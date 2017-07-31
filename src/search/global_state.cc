@@ -18,14 +18,14 @@ std::unique_ptr<StateHash<GlobalState> > GlobalState::hasher = nullptr;
 // This limitation is due to the fact that information on state variables
 // is only available at runtime.
 std::size_t GlobalState::packedState_bytes = 0;
-std::size_t GlobalState::bytes_per_state = 0;
+std::size_t GlobalState::size_in_bytes = 0;
 
 
 // Initialize memory information of states, as well as primary hash function used.
 // Should only be called after states have been packed by int_packer.
 void GlobalState::initialize_state_info() {
     packedState_bytes = g_state_packer->get_num_bins() * sizeof(PackedStateBin);
-    bytes_per_state =
+    size_in_bytes =
         packedState_bytes +
         sizeof(state_id) +
         sizeof(parent_state_id) +
@@ -49,7 +49,7 @@ GlobalState::GlobalState() : GlobalState(StateID::no_state) {}
 GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState) :
     packedState(packedState)
 {
-    if (!packedState_bytes || !bytes_per_state || !hasher) initialize_state_info();
+    if (!packedState_bytes || !size_in_bytes || !hasher) initialize_state_info();
 }
 
 GlobalState::GlobalState(const std::vector<PackedStateBin> &packedState,

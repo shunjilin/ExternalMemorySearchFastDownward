@@ -59,7 +59,7 @@ class GlobalState {
     size_t get_parent_hash_value() const;
     
     static size_t packedState_bytes;
-    static size_t bytes_per_state;
+    static size_t size_in_bytes;
 
     static void initialize_hash_function(std::unique_ptr<StateHash<GlobalState> > hash_function);
     
