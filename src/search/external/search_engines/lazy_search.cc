@@ -102,6 +102,7 @@ namespace lazy_search {
 
         if (check_goal_and_set_plan(s)) {
             open_list->clear();
+            closed_list->clear();
             return SOLVED;
         }
         bool found, reopened;

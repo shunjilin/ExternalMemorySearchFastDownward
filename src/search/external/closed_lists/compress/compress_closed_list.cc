@@ -82,8 +82,8 @@ namespace compress_closed_list {
         virtual vector<const GlobalOperator*> trace_path(const Entry &entry)
             const override;
 
-        void clear();
-        void print_statistics() const;
+        virtual void clear() override;
+        virtual void print_statistics() const override;
     };
 
     /*                                                                      \
@@ -112,6 +112,9 @@ namespace compress_closed_list {
                 utils::make_unique_ptr<ZobristHash<Entry> >();
            
             buffers.resize(n_partitions);
+            for (auto& buffer : buffers) {
+                buffer.reserve(max_buffer_entries);
+            }
         } else {
             buffers.resize(1); // use only buffers[0] if no partitioning
         }
@@ -235,6 +238,7 @@ namespace compress_closed_list {
         if (enable_partitioning)
             partition_table->insert_map_value(partition_value);
         buffers[partition_value].clear();
+        //unordered_set<Entry>().swap(buffers[partition_value]); // release memory
     }
     
 
@@ -319,7 +323,10 @@ namespace compress_closed_list {
              << internal_closed.get_load_factor() << "\n";
         cout << "Successful probes into the closed list (includes buffer hits): " << good_probes
              << "\nUnsuccessful probes into the closed list: "
-             << bad_probes << endl;
+             << bad_probes << "\n";
+        cout << "Partition table entries: " << partition_table->size() << "\n";
+        cout << "Partition table size: " << partition_table->get_size_in_bytes()
+             << " bytes" << endl;
     }
 
     CompressClosedListFactory::

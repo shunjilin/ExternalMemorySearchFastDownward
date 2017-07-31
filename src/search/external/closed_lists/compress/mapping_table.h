@@ -2,7 +2,6 @@
 #define MAPPING_TABLE_H
 
 #include <vector>
-#include <iostream>
 #include <cassert>
 
 /*                                                                           \
@@ -29,6 +28,14 @@ public:
 	auto map_index = ptr / nodes_per_map;
 	assert(map_index < table.size());
 	return table[map_index];
+    }
+
+    std::size_t size() const {
+        return table.size();
+    }
+    
+    std::size_t get_size_in_bytes() const {
+        return table.capacity() * sizeof(unsigned);
     }
 };
 

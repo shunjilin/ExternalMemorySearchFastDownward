@@ -18,7 +18,8 @@ class ClosedList {
     virtual std::pair<found, reopened> find_insert(const Entry &entry) = 0;
     virtual std::vector<const GlobalOperator *>
         trace_path(const Entry &entry) const = 0;
-    virtual void print_statistics() const;
+    virtual void clear() = 0;
+    virtual void print_statistics() const = 0;
 };
 
 using StateClosedListEntry = GlobalState;
@@ -27,11 +28,6 @@ using StateClosedList = ClosedList<StateClosedListEntry>;
 template<class Entry>
 ClosedList<Entry>::ClosedList(bool reopen_closed)
 : reopen_closed(reopen_closed) {
-}
-
-template<class Entry>
-void ClosedList<Entry>::print_statistics() const {
-    // print nothing if no statistics
 }
 
 #endif
