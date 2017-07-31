@@ -112,9 +112,6 @@ namespace compress_closed_list {
                 utils::make_unique_ptr<ZobristHash<Entry> >();
            
             buffers.resize(n_partitions);
-            for (auto& buffer : buffers) {
-                buffer.reserve(max_buffer_entries);
-            }
         } else {
             buffers.resize(1); // use only buffers[0] if no partitioning
         }
@@ -237,8 +234,7 @@ namespace compress_closed_list {
         }
         if (enable_partitioning)
             partition_table->insert_map_value(partition_value);
-        buffers[partition_value].clear();
-        //unordered_set<Entry>().swap(buffers[partition_value]); // release memory
+        unordered_set<Entry>().swap(buffers[partition_value]); // release memory
     }
     
 
