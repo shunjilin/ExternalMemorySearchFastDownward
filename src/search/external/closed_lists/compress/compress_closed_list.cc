@@ -58,7 +58,7 @@ namespace compress_closed_list {
         unsigned get_partition_value(const Entry &entry) const;
         
         void flush_buffer(size_t partition_value);
-        void initialize(size_t entry_size_in_bytes);
+        void initialize();
 
         void read_external_at(Entry& entry, size_t index) const;
         void write_external_at(const Entry& entry, size_t index);
@@ -94,9 +94,9 @@ namespace compress_closed_list {
     \======================================================================*/
     template<class Entry>
     void CompressClosedList<Entry>::
-    initialize(size_t entry_size_in_bytes) {
+    initialize() {
         // set max buffer entries
-        max_buffer_entries = max_buffer_size_in_bytes / entry_size_in_bytes;
+        max_buffer_entries = max_buffer_size_in_bytes / Entry::bytes_per_state;
 
         // initialize primary hash
         // TODO: select hash functions from options
@@ -118,7 +118,7 @@ namespace compress_closed_list {
         
         // initialize external closed list
         external_closed_bytes =
-            internal_closed.get_max_entries() * entry_size_in_bytes;
+            internal_closed.get_max_entries() * Entry::bytes_per_state;
         cout << "external closed bytes " << external_closed_bytes << endl;
 
         // initialize external closed list
@@ -163,7 +163,7 @@ namespace compress_closed_list {
     pair<found, reopened> CompressClosedList<Entry>::
     find_insert(const Entry &entry) {
         
-        if (!initialized) initialize(Entry::bytes_per_state);
+        if (!initialized) initialize();
         
         // First look in buffer
         auto partition_value =
