@@ -6,41 +6,33 @@
 using namespace std::chrono;
 
 namespace utils {
-    WallTimer::WallTimer() : start_time(high_resolution_clock::now()) {}
+    WallTimer::WallTimer() : start_time(steady_clock::now()) {}
 
-    void WallTimer::clear() {
-        start_time = high_resolution_clock::time_point::min();
-        end_time = high_resolution_clock::time_point::min();
-    }
-
-    // returns true if the timer is running
-    bool WallTimer::is_started() const {
-        return start_time != high_resolution_clock::time_point::min();
-        //return start_time.time_since_epoch() != high_resolution_clock::duration(0);
+    void WallTimer::reset() {
+        start_time = steady_clock::now();
+        stopped = false;
     }
 
     bool WallTimer::is_stopped() const {
-        return end_time != high_resolution_clock::time_point::min();
-        //return end_time.time_since_epoch() != high_resolution_clock::duration(0);
+        return stopped;
     }
 
     void WallTimer::start() {
-        start_time = high_resolution_clock::now();
+        start_time = steady_clock::now();
     }
 
     void WallTimer::stop() {
-        end_time = high_resolution_clock::now();
+        end_time = steady_clock::now();
+        stopped = true;
     }
 
     duration<float>::rep WallTimer::get_seconds() const {
         if (is_stopped()) {
             auto diff = end_time - start_time;
             return duration<float>(diff).count();
-        } else if (is_started()) {
-            auto diff = high_resolution_clock::now() - start_time;
-            return duration<float>(diff).count();
         }
-        return 0;
+        auto diff = steady_clock::now() - start_time;
+        return duration<float>(diff).count();    
     }
 
     std::ostream &operator<<(std::ostream &os, const WallTimer &wall_timer) {

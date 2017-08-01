@@ -10,15 +10,14 @@ using namespace std::chrono;
 namespace utils {
 
     class WallTimer {
-        high_resolution_clock::time_point start_time;
-        high_resolution_clock::time_point end_time;
+        bool stopped = false;
+        steady_clock::time_point start_time;
+        steady_clock::time_point end_time;
     public :
         // construction implictly starts timer
         WallTimer();
 
-        void clear();
-
-        bool is_started() const;
+        void reset();
 
         bool is_stopped() const;
 
