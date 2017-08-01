@@ -66,7 +66,7 @@ namespace lazy_search {
 
         // Note: we consider the initial state as reached by a preferred
         // operator.
-        EvaluationContext eval_context(initial_state, 0, true, &statistics);
+        EvaluationContext eval_context(initial_state, true, &statistics);
 
         statistics.inc_evaluated_states();
 
@@ -99,7 +99,7 @@ namespace lazy_search {
         }
 
         GlobalState s = n.first;
-
+        
         if (check_goal_and_set_plan(s)) {
             open_list->clear();
             closed_list->clear();
@@ -127,7 +127,7 @@ namespace lazy_search {
         pruning_method->prune_operators(s, applicable_ops);
 
         // This evaluates the expanded state (again) to get preferred ops
-        EvaluationContext eval_context(s, s.get_g(), false, &statistics, true);
+        EvaluationContext eval_context(s, false, &statistics, true);
         ordered_set::OrderedSet<OperatorID> preferred_operators =
             collect_preferred_operators(eval_context, preferred_operator_heuristics);
 
@@ -151,14 +151,9 @@ namespace lazy_search {
             //}
             // We have not seen this state before.
             // Evaluate and create a new node.
-
-            // Careful: succ_node.get_g() is not available here yet,
-            // hence the stupid computation of succ_g.
-            // TODO: Make this less fragile.
-            int succ_g = succ_state.get_g() + get_adjusted_cost(*op);
-
+            
             EvaluationContext eval_context(
-                                           succ_state, succ_g, is_preferred, &statistics);
+                                           succ_state, is_preferred, &statistics);
             statistics.inc_evaluated_states();
 
             if (open_list->is_dead_end(eval_context)) {
@@ -219,8 +214,9 @@ namespace lazy_search {
               TODO: This code doesn't fit the idea of supporting
               an arbitrary f evaluator.
             */
-            EvaluationContext eval_context(state, state.get_g(), false, &statistics);
+            EvaluationContext eval_context(state, false, &statistics);
             int f_value = eval_context.get_heuristic_value(f_evaluator);
+            //if (f_value > 56) cout << "WHY " << f_value << endl;
             statistics.report_f_value_progress(f_value);
         }
     }

@@ -76,6 +76,7 @@ namespace external_tiebreaking_open_list {
 
     template<class Entry>
     Entry ExternalTieBreakingOpenList<Entry>::remove_min() {
+        //TODO is this really removing the minimum f value?
         assert(size > 0);
         Entry min_entry;
 
@@ -85,7 +86,7 @@ namespace external_tiebreaking_open_list {
             // tiebreak by highest g value
             for (auto g_bucket = f_bucket->second.rbegin();
                  g_bucket != f_bucket->second.rend(); ++g_bucket) {
-                
+
                 //reverse seek
                 g_bucket->second.seekp(-Entry::size_in_bytes, ios::cur);
                 

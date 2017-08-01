@@ -6,15 +6,20 @@
 
 #include <cassert>
 
+#ifdef EXTERNAL_SEARCH
+// this is to access GlobalState.get_g(), to prevent unnecessary storing of
+// g value in EvaluationContext as GlobalState stores its own g value
+#include "global_state.h"
+#endif
+
 using namespace std;
 
 #ifdef EXTERNAL_SEARCH
 EvaluationContext::EvaluationContext(const GlobalState &state,
-                                     int g_value, bool is_preferred,
+                                     bool is_preferred,
                                      SearchStatistics *statistics,
                                      bool calculate_preferred)
     : state(state),
-      g_value(g_value),
       preferred(is_preferred),
       statistics(statistics),
       calculate_preferred(calculate_preferred) {
@@ -72,28 +77,32 @@ const EvaluationResult &EvaluationContext::get_result(Evaluator *heur) {
 }
 #endif
 
-#ifdef EXTERNAL_SEARCH
-const GlobalState &EvaluationContext::get_state() const {
-    return state;
-}
-#else
+#ifndef EXTERNAL_SEARCH
 const HeuristicCache &EvaluationContext::get_cache() const {
     return cache;
 }
+#endif
 
 const GlobalState &EvaluationContext::get_state() const {
+#ifdef EXTERNAL_SEARCH
+    return state;
+#else
     return cache.get_state();
-}
 #endif
+}
 
 bool EvaluationContext::is_preferred() const {
     assert(g_value != INVALID);
     return preferred;
 }
- 
+
 int EvaluationContext::get_g_value() const {
+#ifdef EXTERNAL_SEARCH
+    return state.get_g();
+#else
     assert(g_value != INVALID);
     return g_value;
+#endif
 }
 
 bool EvaluationContext::is_heuristic_infinite(Evaluator *heur) {

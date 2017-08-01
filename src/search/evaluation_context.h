@@ -55,8 +55,8 @@ class EvaluationContext {
     const GlobalState &state;
 #else
     HeuristicCache cache;
-#endif
     int g_value;
+#endif
     bool preferred;
     SearchStatistics *statistics;
     bool calculate_preferred;
@@ -66,7 +66,7 @@ public:
 
 #ifdef EXTERNAL_SEARCH
     EvaluationContext(const GlobalState &state,
-                      int g_value, bool is_preferred,
+                      bool is_preferred,
                       SearchStatistics *statistics,
                       bool calculate_preferred = false);
 #else
