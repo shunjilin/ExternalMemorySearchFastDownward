@@ -16,7 +16,7 @@ using namespace std;
 
 class named_fstream : public fstream {
     string file_name;
-    vector<char> buffer = vector<char>(BUFFER_SIZE);
+    //vector<char> buffer = vector<char>(BUFFER_SIZE);
  public:
     named_fstream() = default;
     named_fstream(const string file_name,
