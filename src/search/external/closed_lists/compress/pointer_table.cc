@@ -8,19 +8,66 @@
 #include <climits>
 #include <iostream>
 
+// for primality testing
+#include <boost/multiprecision/miller_rabin.hpp>
+
 using namespace std;
+using namespace boost::multiprecision;
 
 constexpr size_t size_t_bits = sizeof(size_t) * CHAR_BIT;
+
+#define PRIME // perhaps set this as option parameter instead of macro
 
 // Note: bools in vectors take up 1 bit each
 // (max_entries * ptr_bits) == bits.size()
 
-PointerTable::PointerTable(size_t ptr_table_size_in_bytes) :
-    ptr_size_in_bits(get_ptr_size_in_bits(ptr_table_size_in_bytes)),
-    max_entries((ptr_table_size_in_bytes * 8) / ptr_size_in_bits), // round down
-    bit_vector(ptr_size_in_bits * max_entries, true),
-    invalid_ptr(numeric_limits<size_t>::max() >> (size_t_bits - ptr_size_in_bits))
-    {}
+PointerTable::PointerTable(size_t ptr_table_size_in_bytes) //:
+//ptr_size_in_bits(get_ptr_size_in_bits(ptr_table_size_in_bytes)),
+//max_entries((ptr_table_size_in_bytes * 8) / ptr_size_in_bits), // round down
+    //bit_vector(ptr_size_in_bits * max_entries, true),
+    //invalid_ptr(numeric_limits<size_t>::max() >> (size_t_bits - ptr_size_in_bits))
+{
+    size_t big_ptr_size_in_bits = get_ptr_size_in_bits(ptr_table_size_in_bytes);
+    
+    // need to check if size is optimal
+    size_t small_ptr_size_in_bits = 0;
+    
+    if (ptr_size_in_bits > 1) // guard against edge case where ptr is 1 bit
+        small_ptr_size_in_bits = big_ptr_size_in_bits - 1;
+    
+    size_t big_ptr_entries = ptr_table_size_in_bytes * 8 / big_ptr_size_in_bits;
+    size_t small_ptr_entries = pow(2, small_ptr_size_in_bits);
+#ifdef PRIME
+    for (; big_ptr_entries > 0; --big_ptr_entries) {
+        if (miller_rabin_test(big_ptr_entries, 25)) break;
+    }
+    for (; small_ptr_entries > 0; --small_ptr_entries) {
+        if (miller_rabin_test(small_ptr_entries, 25)) break;
+    }
+#endif
+    if (big_ptr_entries > small_ptr_entries) {
+        ptr_size_in_bits = big_ptr_size_in_bits;
+        max_entries = big_ptr_entries;
+    } else {
+        ptr_size_in_bits = small_ptr_size_in_bits;
+        max_entries = small_ptr_entries;
+    }
+#ifndef PRIME
+    // On the off chance that max_entries is exactly 2^ptr_size_in_bits, we
+    // need to reduce the table size so that the arbitrarily defined invalid
+    // pointer (all bools set to true) does not point to an actual entry.
+    // If max_entry is a prime, we do not need to worry about this edge case.
+    if (max_entries == pow(2, ptr_size_in_bits))
+        --max_entries;
+#endif
+    
+    bit_vector.resize(ptr_size_in_bits * max_entries, true);
+
+    // all true within size of ptr
+    invalid_ptr = numeric_limits<size_t>::max() >> (size_t_bits - ptr_size_in_bits);
+}
+
+    
 
 // find takes an index and returns pointer value at that index
 size_t PointerTable::find(std::size_t index) const {
@@ -93,9 +140,10 @@ size_t PointerTable::get_max_size_in_bytes() const {
 // leads to ability to access bigger hash table, as sometimes the space constraint
 // leads to smaller access sizes! Assume user input is Hard Limit
 
-// get the size of a pointer (in bits)  given the size of
-// the pointer table in bytes
-// conservative estimate, rounds down
+// Get the size of a pointer (in bits)  given the size of
+// the pointer table in bytes.
+// Returns the biggest pointer size, may not be optimal in terms of size of
+// pointer table.
 size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const {
     size_t ptr_size_in_bits = 0;
     auto max_ptr_bits = size_t_bits;

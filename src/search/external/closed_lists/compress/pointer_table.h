@@ -15,7 +15,7 @@ class PointerTable {
     size_t n_entries = 0; // current # of pointers in table
     size_t max_entries; // max # of pointers in table
     vector<bool> bit_vector;
-    const size_t invalid_ptr; // value of unset pointer (bools all set to true)
+    size_t invalid_ptr; // value of unset pointer (bools all set to true)
     mutable size_t current_probe_index; // for hashing
 
     size_t get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const;
@@ -23,7 +23,7 @@ class PointerTable {
 public:
     PointerTable(std::size_t ptr_table_size_in_bytes);
 
-    size_t find(size_t index) const; // change to [] operator?
+    size_t find(size_t index) const;
 
     bool ptr_is_invalid(size_t ptr) const;
 
@@ -35,7 +35,7 @@ public:
 
     size_t get_n_entries() const;
 
-    size_t get_max_entries() const; // change to size?
+    size_t get_max_entries() const;
 
     size_t get_max_size_in_bytes() const;
 
