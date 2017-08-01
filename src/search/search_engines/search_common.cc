@@ -42,7 +42,7 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
             options.set("unsafe_pruning", false); // is this needed?
             options.set("reopen_closed", true);
             options.set("enable_partitioning", true);
-            options.set("internal_closed_gb", 1.0);
+            options.set("internal_closed_gb", 0.5);
             shared_ptr<OpenListFactory> open =
                 make_shared<external_tiebreaking_open_list::
                             ExternalTieBreakingOpenListFactory>(options);
