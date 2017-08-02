@@ -71,9 +71,7 @@ namespace compress_closed_list {
         // as the os is in charge of caching and paging in and out
         mutable size_t good_probes = 0;
         mutable size_t bad_probes = 0;
-
-        void print_initial_statistics() const;
-                
+        
     public:
         explicit CompressClosedList(const Options &opts);
         virtual ~CompressClosedList() override = default;
@@ -147,18 +145,15 @@ namespace compress_closed_list {
         enable_partitioning(opts.get<bool>("enable_partitioning")),
         internal_closed(opts.get<double>("internal_closed_gb") * pow(1024, 3)) 
     {
-        print_initial_statistics();
-    }
-
-    template<class Entry>
-    void CompressClosedList<Entry>::print_initial_statistics() const {
+        // For logging purposes.
         cout << "Using compress closed list ";
         if (enable_partitioning)
-            cout << "with " << n_partitions << " partitions";
-        cout << ".\n";
-        cout << "Closed list max entries: " << internal_closed.get_max_entries()
+            cout << "with " << n_partitions << " partitions.\n";
+        cout << "Maximum capacity (entries) of closed list: "
+             << internal_closed.get_max_entries()
              << endl;
     }
+
     template<class Entry>
     pair<found, reopened> CompressClosedList<Entry>::
     find_insert(const Entry &entry) {
