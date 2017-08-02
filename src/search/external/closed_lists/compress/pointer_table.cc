@@ -6,7 +6,9 @@
 #include <limits>
 #include <cmath>
 #include <climits>
+#include <stdexcept>
 #include <iostream>
+#include "../../utils/wall_timer.h"
 
 // for primality testing
 #include <boost/multiprecision/miller_rabin.hpp>
@@ -21,12 +23,9 @@ constexpr size_t size_t_bits = sizeof(size_t) * CHAR_BIT;
 // Note: bools in vectors take up 1 bit each
 // (max_entries * ptr_bits) == bits.size()
 
-PointerTable::PointerTable(size_t ptr_table_size_in_bytes) //:
-//ptr_size_in_bits(get_ptr_size_in_bits(ptr_table_size_in_bytes)),
-//max_entries((ptr_table_size_in_bytes * 8) / ptr_size_in_bits), // round down
-    //bit_vector(ptr_size_in_bits * max_entries, true),
-    //invalid_ptr(numeric_limits<size_t>::max() >> (size_t_bits - ptr_size_in_bits))
+PointerTable::PointerTable(size_t ptr_table_size_in_bytes)
 {
+    utils::WallTimer timer;
     size_t big_ptr_size_in_bits = get_ptr_size_in_bits(ptr_table_size_in_bytes);
     
     // need to check if size is optimal
@@ -45,6 +44,7 @@ PointerTable::PointerTable(size_t ptr_table_size_in_bytes) //:
         if (miller_rabin_test(small_ptr_entries, 25)) break;
     }
 #endif
+    size_t max_entries = 0;
     if (big_ptr_entries > small_ptr_entries) {
         ptr_size_in_bits = big_ptr_size_in_bits;
         max_entries = big_ptr_entries;
@@ -65,9 +65,31 @@ PointerTable::PointerTable(size_t ptr_table_size_in_bytes) //:
 
     // all true within size of ptr
     invalid_ptr = numeric_limits<size_t>::max() >> (size_t_bits - ptr_size_in_bits);
+
+    // For logging purposes.
+    // Due to primality tests, initialization may take some time.
+    cout << "Time taken to initialize pointer table is: " << timer << "\n"
+         << "Size of pointer in pointer table: " << get_ptr_size_in_bits() << " bits\n"
+         << "Size of pointer table is: " << get_max_size_in_bytes() << " bytes\n"
+         << "Max entries of pointer table is: " << get_max_entries() << endl;
 }
 
-    
+// Get the size of a pointer (in bits)  given the size of
+// the pointer table in bytes (upper limit).
+// Returns the biggest pointer size, may not be optimal in terms of size of
+// pointer table.
+size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const {
+    size_t ptr_size_in_bits = 0;
+    auto max_ptr_bits = size_t_bits;
+    for (std::size_t ptr_sz = 0; ptr_sz < max_ptr_bits; ++ptr_sz) {
+	std::size_t total_ptr_table_bits = ptr_sz * pow(2, ptr_sz);
+	if (total_ptr_table_bits >= (ptr_table_size_in_bytes * CHAR_BIT)) {
+	    ptr_size_in_bits = ptr_sz;
+	    break;
+	}
+    }
+    return ptr_size_in_bits;
+}
 
 // find takes an index and returns pointer value at that index
 size_t PointerTable::find(std::size_t index) const {
@@ -81,12 +103,11 @@ size_t PointerTable::find(std::size_t index) const {
     return pointer;
 }
 
-bool PointerTable::ptr_is_invalid(size_t ptr) const {
-    return ptr == invalid_ptr;
-}
     
 // insert takes pointer and index and inserts pointer into the table
 void PointerTable::insert(size_t pointer, size_t index) {
+    if (get_n_entries() == get_max_entries())
+        throw runtime_error("Attempting to insert in full pointer table");
     // go to last bit of the entry at index
     std::size_t bit_index = ((index + 1) * ptr_size_in_bits) - 1;
     // insert from last bit to first bit
@@ -98,8 +119,13 @@ void PointerTable::insert(size_t pointer, size_t index) {
     ++n_entries;
 }
 
-// single hash -> change to dbl hash for better performance?
+bool PointerTable::ptr_is_invalid(size_t ptr) const {
+    return ptr == invalid_ptr;
+}
+
+// linear probing
 void PointerTable::hash_insert(std::size_t pointer, std::size_t hash_value) {
+    auto max_entries = get_max_entries();
     std::size_t hash_index = hash_value % max_entries;
     while (!ptr_is_invalid(find(hash_index))) {
 	++hash_index;
@@ -108,10 +134,10 @@ void PointerTable::hash_insert(std::size_t pointer, std::size_t hash_value) {
     insert(pointer, hash_index);
 }
 
-// single hash
-// return ptr
+// linear probing
 size_t PointerTable::hash_find(size_t hash_value,
                                bool first_probe) const {
+    auto max_entries = get_max_entries();
     if (first_probe) {
 	current_probe_index = hash_value % max_entries;
     } else {
@@ -128,33 +154,11 @@ size_t PointerTable::get_n_entries() const {
 }
 
 size_t PointerTable::get_max_entries() const {
-    return max_entries;
+    return bit_vector.size() / ptr_size_in_bits;
 }
 
 size_t PointerTable::get_max_size_in_bytes() const {
     return bit_vector.size() / 8;
-}
-
-
-//TODO IMPORTANT!: Need to optimize this. Make sure that increasing pointer size
-// leads to ability to access bigger hash table, as sometimes the space constraint
-// leads to smaller access sizes! Assume user input is Hard Limit
-
-// Get the size of a pointer (in bits)  given the size of
-// the pointer table in bytes.
-// Returns the biggest pointer size, may not be optimal in terms of size of
-// pointer table.
-size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const {
-    size_t ptr_size_in_bits = 0;
-    auto max_ptr_bits = size_t_bits;
-    for (std::size_t ptr_sz = 0; ptr_sz < max_ptr_bits; ++ptr_sz) {
-	std::size_t total_ptr_table_bits = ptr_sz * pow(2, ptr_sz);
-	if (total_ptr_table_bits >= (ptr_table_size_in_bytes * CHAR_BIT)) {
-	    ptr_size_in_bits = ptr_sz;
-	    break;
-	}
-    }
-    return ptr_size_in_bits;
 }
 
 size_t PointerTable::get_ptr_size_in_bits() const {
