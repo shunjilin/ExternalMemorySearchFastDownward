@@ -8,24 +8,14 @@
 
 using namespace std;
 
-namespace plugin_ssd_astar {
+namespace plugin_lazy_astar {
 static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
     parser.document_synopsis(
         "External A* search (lazy) with SSD using compress closed list",
         "A* is a best first search that uses g+h "
         "as f-function. "
         "We break ties using the evaluator. Closed nodes are re-opened.");
-    // Find out appropriate substitution
-    /*
-    parser.document_note(
-        "Equivalent statements using general eager search",
-        "\n```\n--search astar(evaluator)\n```\n"
-        "is equivalent to\n"
-        "```\n--heuristic h=evaluator\n"
-        "--search eager(tiebreaking([sum([g(), h]), h], unsafe_pruning=false),\n"
-        "               reopen_closed=true, f_eval=sum([g(), h]))\n"
-        "```\n", true);
-    */
+
     parser.add_option<Evaluator *>("eval", "evaluator for h-value");
 
     SearchEngine::add_pruning_option(parser);
@@ -49,5 +39,5 @@ static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
     return engine;
 }
 
-static PluginShared<SearchEngine> _plugin("ssd_astar", _parse);
+static PluginShared<SearchEngine> _plugin("lazy_astar", _parse);
 }
