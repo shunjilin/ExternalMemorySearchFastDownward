@@ -40,7 +40,7 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
             options.set("evals", evals);
             options.set("pref_only", false); // is this needed?
             options.set("unsafe_pruning", false); // is this needed?
-            options.set("reopen_closed", true);
+            options.set("reopen_closed", opts.get<bool>("reopen_closed"));
             options.set("enable_partitioning", true);
             options.set("internal_closed_gb", 0.5);
             shared_ptr<OpenListFactory> open =

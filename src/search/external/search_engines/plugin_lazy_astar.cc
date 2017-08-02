@@ -24,13 +24,13 @@ static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
 
     shared_ptr<lazy_search::LazySearch> engine;
     if (!parser.dry_run()) {
+        opts.set("reopen_closed", true); // engine, open & closed depends on this
         auto temp =
             search_common::
             create_astar_open_list_factory_closed_list_factory_and_f_eval(opts);
         opts.set("open", get<0>(temp));
         opts.set("closed", get<1>(temp));
         opts.set("f_eval", get<2>(temp));
-        opts.set("reopen_closed", true);
         vector<Heuristic *> preferred_list;
         opts.set("preferred", preferred_list);
         engine = make_shared<lazy_search::LazySearch>(opts);
