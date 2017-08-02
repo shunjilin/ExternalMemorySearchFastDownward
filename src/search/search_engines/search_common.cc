@@ -38,14 +38,16 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
 
             Options options;
             options.set("evals", evals);
-            options.set("pref_only", false); // is this needed?
-            options.set("unsafe_pruning", false); // is this needed?
-            options.set("reopen_closed", opts.get<bool>("reopen_closed"));
-            options.set("enable_partitioning", true);
-            options.set("internal_closed_gb", 0.5);
+            //options.set("pref_only", false); // is this needed?
+            //options.set("unsafe_pruning", false); // is this needed?
             shared_ptr<OpenListFactory> open =
                 make_shared<external_tiebreaking_open_list::
                             ExternalTieBreakingOpenListFactory>(options);
+            
+            options.set("reopen_closed", opts.get<bool>("reopen_closed"));
+            options.set("enable_partitioning", true); // set this as user option?
+            options.set("internal_closed_gb", 0.5); // set this as user option?
+            options.set("double_hashing", true); // set this as user option?
             shared_ptr<ClosedListFactory> closed =
                 make_shared<compress_closed_list::
                             CompressClosedListFactory>(options);

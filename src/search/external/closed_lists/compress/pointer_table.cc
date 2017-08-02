@@ -81,8 +81,8 @@ PointerTable::PointerTable(size_t ptr_table_size_in_bytes)
 size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const {
     size_t ptr_size_in_bits = 0;
     auto max_ptr_bits = size_t_bits;
-    for (std::size_t ptr_sz = 0; ptr_sz < max_ptr_bits; ++ptr_sz) {
-	std::size_t total_ptr_table_bits = ptr_sz * pow(2, ptr_sz);
+    for (size_t ptr_sz = 0; ptr_sz < max_ptr_bits; ++ptr_sz) {
+	size_t total_ptr_table_bits = ptr_sz * pow(2, ptr_sz);
 	if (total_ptr_table_bits >= (ptr_table_size_in_bytes * CHAR_BIT)) {
 	    ptr_size_in_bits = ptr_sz;
 	    break;
@@ -92,10 +92,10 @@ size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const 
 }
 
 // find takes an index and returns pointer value at that index
-size_t PointerTable::find(std::size_t index) const {
+size_t PointerTable::find(size_t index) const {
     size_t pointer = 0;
     size_t bit_index = index * ptr_size_in_bits; // actual offset
-    for (std::size_t i = 0; i < ptr_size_in_bits; ++i) {
+    for (size_t i = 0; i < ptr_size_in_bits; ++i) {
 	pointer <<= 1;
 	if (bit_vector[bit_index]) pointer |= 1;
 	++bit_index;
@@ -109,9 +109,9 @@ void PointerTable::insert(size_t pointer, size_t index) {
     if (get_n_entries() == get_max_entries())
         throw runtime_error("Attempting to insert in full pointer table");
     // go to last bit of the entry at index
-    std::size_t bit_index = ((index + 1) * ptr_size_in_bits) - 1;
+    size_t bit_index = ((index + 1) * ptr_size_in_bits) - 1;
     // insert from last bit to first bit
-    for (std::size_t i = 0; i < ptr_size_in_bits; ++i) {
+    for (size_t i = 0; i < ptr_size_in_bits; ++i) {
 	if (!(pointer & 1)) bit_vector[bit_index] = false;
 	pointer >>= 1;
 	--bit_index;
@@ -123,28 +123,27 @@ bool PointerTable::ptr_is_invalid(size_t ptr) const {
     return ptr == invalid_ptr;
 }
 
-// linear probing
-void PointerTable::hash_insert(std::size_t pointer, std::size_t hash_value) {
+void PointerTable::hash_insert(size_t pointer,
+                               size_t hash_value,
+                               size_t probe_value) {
     auto max_entries = get_max_entries();
-    std::size_t hash_index = hash_value % max_entries;
-    while (!ptr_is_invalid(find(hash_index))) {
-	++hash_index;
-	if (hash_index == max_entries) hash_index = 0; //reset
+    size_t probe_index = hash_value % max_entries;
+    while (!ptr_is_invalid(find(probe_index))) {
+	probe_index =
+             (probe_index + (probe_value % max_entries)) % max_entries; 
     }
-    insert(pointer, hash_index);
+    insert(pointer, probe_index);
 }
 
-// linear probing
 size_t PointerTable::hash_find(size_t hash_value,
+                               size_t probe_value,
                                bool first_probe) const {
     auto max_entries = get_max_entries();
     if (first_probe) {
 	current_probe_index = hash_value % max_entries;
     } else {
-	++current_probe_index;
-	if (current_probe_index == max_entries) {
-	    current_probe_index = 0;
-	}
+        current_probe_index =
+            (current_probe_index + (probe_value % max_entries)) % max_entries; 
     }
     return find(current_probe_index);
 }

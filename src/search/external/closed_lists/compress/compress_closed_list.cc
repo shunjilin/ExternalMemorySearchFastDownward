@@ -35,6 +35,7 @@ namespace compress_closed_list {
     class CompressClosedList : public ClosedList<Entry> { 
         bool reopen_closed;
         bool enable_partitioning;
+        bool double_hashing;
 
         vector<unordered_set<Entry> > buffers;
 
@@ -42,8 +43,7 @@ namespace compress_closed_list {
         unique_ptr<MappingTable> partition_table;
         unique_ptr<StateHash<Entry> > partition_hash;
         unsigned n_partitions = 100;
-
-        
+       
         PointerTable internal_closed;
         int external_closed_fd;
         char *external_closed;
@@ -71,6 +71,8 @@ namespace compress_closed_list {
         // as the os is in charge of caching and paging in and out
         mutable size_t good_probes = 0;
         mutable size_t bad_probes = 0;
+
+        size_t get_probe_value(size_t hash_value) const;
         
     public:
         explicit CompressClosedList(const Options &opts);
@@ -143,15 +145,31 @@ namespace compress_closed_list {
     CompressClosedList<Entry>::CompressClosedList(const Options &opts)
         : ClosedList<Entry>(opts.get<bool>("reopen_closed")),
         enable_partitioning(opts.get<bool>("enable_partitioning")),
+        double_hashing(opts.get<bool>("double_hashing")),
         internal_closed(opts.get<double>("internal_closed_gb") * pow(1024, 3)) 
     {
         // For logging purposes.
         cout << "Using compress closed list ";
         if (enable_partitioning)
-            cout << "with " << n_partitions << " partitions.\n";
+            cout << "with " << n_partitions << " partitions ";
+        if (double_hashing) {
+            cout << "with double hashing\n";
+        } else {
+            cout << "with linear probing\n";
+        }
         cout << "Maximum capacity (entries) of closed list: "
              << internal_closed.get_max_entries()
              << endl;
+    }
+
+    template<class Entry>
+    size_t CompressClosedList<Entry>::get_probe_value(size_t hash_value) const {
+        if (!double_hashing) return 1; // linear probing
+        
+        // From Introduction to Algorithms 3rd Edition, pg 273
+        // This guarantees that double hashing does not cycle if max entries of
+        // internal_closed is prime.
+        return 1 + (hash_value % (internal_closed.get_max_entries() - 1));
     }
 
     template<class Entry>
@@ -180,7 +198,9 @@ namespace compress_closed_list {
         }
         
         // Then look in hash tables
-        auto ptr = internal_closed.hash_find(entry.get_hash_value());
+        auto hash_value = entry.get_hash_value();
+        auto probe_value = get_probe_value(hash_value);
+        auto ptr = internal_closed.hash_find(hash_value, probe_value);
         while (!internal_closed.ptr_is_invalid(ptr)) {
 
             // first check in partition table
@@ -203,7 +223,7 @@ namespace compress_closed_list {
             }
             // update pointer and resume while loop if partition values do not
             // match or if hash collision
-            ptr = internal_closed.hash_find(entry.get_hash_value(), false);
+            ptr = internal_closed.hash_find(hash_value, probe_value, false);
         }
         buffers[partition_value].insert(entry);
         if (buffers[partition_value].size() == max_buffer_entries)
@@ -222,8 +242,10 @@ namespace compress_closed_list {
         //cout << "FLUSH" << endl;
         for (auto& node : buffers[partition_value]) {
             write_external_at(node, external_closed_index);
-            
-            internal_closed.hash_insert(external_closed_index, node.get_hash_value());
+            auto hash_value = node.get_hash_value();
+            internal_closed.hash_insert(external_closed_index,
+                                        hash_value,
+                                        get_probe_value(hash_value));
             
             ++external_closed_index;
         }
@@ -261,7 +283,9 @@ namespace compress_closed_list {
                 }
             }
             // Then look in hash tables
-            auto ptr = internal_closed.hash_find(current_state.get_parent_hash_value());
+            auto parent_hash_value = current_state.get_parent_hash_value();
+            auto probe_value = get_probe_value(parent_hash_value);
+            auto ptr = internal_closed.hash_find(parent_hash_value, probe_value);
             while (!internal_closed.ptr_is_invalid(ptr)) {
                 // read node from pointer
                 Entry node;
@@ -272,7 +296,9 @@ namespace compress_closed_list {
                 }
                 // update pointer and resume while loop if partition values do not
                 // match or if hash collision
-                ptr = internal_closed.hash_find(current_state.get_parent_hash_value(), false);
+                ptr = internal_closed.hash_find(parent_hash_value,
+                                                probe_value,
+                                                false);
             }
         }
         reverse(path.begin(), path.end());

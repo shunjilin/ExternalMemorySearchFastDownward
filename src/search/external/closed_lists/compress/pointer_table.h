@@ -32,11 +32,13 @@ public:
     bool ptr_is_invalid(size_t ptr) const;
 
     // Insert pointer into table given hash value.
-    void hash_insert(size_t pointer, size_t hash_value);
+    // Default probe value of 1 for linear probing.
+    void hash_insert(size_t pointer, size_t hash_value, size_t probe_value=1);
 
-    // Return pointer given hash value, if first_probe=false, triggers probe
+    // Returns pointer given hash value, if first_probe=false, triggers probe
     // sequence.
-    size_t hash_find(size_t hash_value, bool first_probe=true) const;
+    // Default probe value of 1 for linear probing.
+    size_t hash_find(size_t hash_value, size_t probe_value=1, bool first_probe=true) const;
 
     // Return current number of (valid) pointers in the table.
     size_t get_n_entries() const;
