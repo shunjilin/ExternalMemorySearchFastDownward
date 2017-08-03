@@ -22,7 +22,7 @@ using namespace std;
 namespace lazy_search {
     LazySearch::LazySearch(const Options &opts)
         : SearchEngine(opts),
-          reopen_closed_nodes(opts.get<bool>("reopen_closed")), // not needed? taken cared of in open list
+          reopen_closed_nodes(opts.get<bool>("reopen_closed")),
           open_list(opts.get<shared_ptr<OpenListFactory> >("open")->
                     create_state_open_list()),
           closed_list(opts.get<shared_ptr<ClosedListFactory> >("closed")->
@@ -107,11 +107,6 @@ namespace lazy_search {
         }
         bool found, reopened;
         std::tie(found, reopened) = closed_list->find_insert(s);
-        // SHUNJI TO CONSIDER: (currently reopening handled by closed node)
-        // If we do not reopen closed nodes, we just update the parent pointers.
-        // Note that this could cause an incompatibility between
-        // the g-value and the actual path that is traced back.
-        // succ_node.update_parent(node, op);
 
         if (found && !reopened) return IN_PROGRESS; // in closed node
 
@@ -160,7 +155,6 @@ namespace lazy_search {
                 statistics.inc_dead_ends();
                 continue;
             }
-            //succ_node.open(node, op);
 
             open_list->insert(eval_context, succ_state);
             
@@ -192,7 +186,6 @@ namespace lazy_search {
         }
             return false;
     }
-        
     
 
     /*void LazySearch::dump_search_space() const {
@@ -216,7 +209,6 @@ namespace lazy_search {
             */
             EvaluationContext eval_context(state, false, &statistics);
             int f_value = eval_context.get_heuristic_value(f_evaluator);
-            //if (f_value > 56) cout << "WHY " << f_value << endl;
             statistics.report_f_value_progress(f_value);
         }
     }
