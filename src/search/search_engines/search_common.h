@@ -40,9 +40,12 @@ namespace search_common {
 #ifdef EXTERNAL_SEARCH
 
 extern std::tuple<std::shared_ptr<OpenListFactory>,
-    std::shared_ptr<ClosedListFactory>, Evaluator *>
-create_astar_open_list_factory_closed_list_factory_and_f_eval(const options::Options &opts);
+                  std::shared_ptr<ClosedListFactory>, Evaluator *>
+create_astar_open_list_factory_closed_list_factory_and_f_eval(const options::Options& opts);
 
+extern std::tuple<std::shared_ptr<OpenListFactory>, Evaluator *>
+create_external_astar_open_list_factory_and_f_eval(const options::Options& opts);
+ 
 #else
 /*
   Create a standard scalar open list factory with the given "eval" and

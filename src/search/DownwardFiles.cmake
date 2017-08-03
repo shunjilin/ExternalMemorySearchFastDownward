@@ -92,7 +92,6 @@ fast_downward_plugin(
         global_operator
         globals
         global_state
-        #heuristic_cache
         heuristic
         open_list
         open_list_factory
@@ -100,30 +99,21 @@ fast_downward_plugin(
         operator_id
         option_parser
         option_parser_util
-        #per_state_information
         plugin
         pruning_method
         search_engine
-        #search_node_info
-        #search_progress
         search_space
         search_statistics
         state_id
         state_registry
         task_proxy
 
-        # move these to another plugin
-        #external/open_lists/external_tiebreaking_open_list
         external/closed_list
         external/closed_list_factory
         external/file_utility
-        external/hash_functions/zobrist
-        external/utils/wall_timer
-        #external/closed_lists/compress_closed_list
-        #external/search_engines/lazy_search
-        
+        external/utils/wall_timer       
 
-    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC MAS_HEURISTIC PLUGIN_EXTERNAL_LAZY_ASTAR
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC MAS_HEURISTIC PLUGIN_EXTERNAL_LAZY_ASTAR PLUGIN_EXTERNAL_ASTAR
     DEPENDENCY_ONLY
 )
 
@@ -138,11 +128,20 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME PLUGIN_EXTERNAL_ASTAR # name conflict
+    HELP "External A* (Edelkamp) search"
+    SOURCES
+        external/search_engines/plugin_external_astar
+    DEPENDS EXTERNAL_ASTAR_SEARCH EXTERNAL_SEARCH_COMMON
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
     NAME EXTERNAL_SEARCH_COMMON
     HELP "Basic classes used for all external search engines"
     SOURCES
         search_engines/search_common
-    DEPENDS G_EVALUATOR SUM_EVALUATOR EXTERNAL_TIEBREAKING_OPEN_LIST COMPRESS_CLOSED_LIST WEIGHTED_EVALUATOR
+    DEPENDS G_EVALUATOR SUM_EVALUATOR EXTERNAL_TIEBREAKING_OPEN_LIST EXTERNAL_ASTAR_OPEN_LIST COMPRESS_CLOSED_LIST WEIGHTED_EVALUATOR
     DEPENDENCY_ONLY
 )
 
@@ -155,6 +154,13 @@ fast_downward_plugin(
     DEPENDENCY_ONLY
 )
 
+fast_downward_plugin(
+    NAME EXTERNAL_ASTAR_OPEN_LIST
+    HELP "External A* (Edelkamp) open list"
+    SOURCES
+        external/open_lists/external_astar_open_list
+    DEPENDENCY_ONLY
+)
   
 fast_downward_plugin(
     NAME EXTERNAL_LAZY_SEARCH
@@ -166,6 +172,15 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME EXTERNAL_ASTAR_SEARCH
+    HELP "External A* (Edelkamp) search algorithm"
+    SOURCES
+        external/search_engines/external_astar_search
+    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR
+    DEPENDENCY_ONLY
+)
+  
+fast_downward_plugin(
     NAME COMPRESS_CLOSED_LIST
     HELP "Compress closed list"
     SOURCES
@@ -174,6 +189,15 @@ fast_downward_plugin(
         external/closed_lists/compress/pointer_table
     DEPENDENCY_ONLY
 )
+
+fast_downward_plugin(
+    NAME HASH_FUNCTIONS
+    HELP "HASH FUNCTIONS"
+    SOURCES
+        external/hash_functions/zobrist
+    DEPENDENCY_ONLY
+)
+
 # END OF EXTERNAL SEARCH PLUGINS
 
 fast_downward_plugin(
