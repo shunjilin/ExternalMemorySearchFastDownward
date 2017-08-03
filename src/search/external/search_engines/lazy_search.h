@@ -29,12 +29,11 @@ namespace lazy_search {
         std::vector<Heuristic *> preferred_operator_heuristics;
         std::shared_ptr<PruningMethod> pruning_method;
 
-        std::pair<GlobalState, bool> fetch_next_node(); // should i use node here?
+        std::pair<GlobalState, bool> fetch_next_node();
         bool check_goal_and_set_plan(const GlobalState &state);
 
         void start_f_value_statistics(EvaluationContext &eval_context);
         void update_f_value_statistics(const GlobalState &node);
-        void reward_progress();
         void print_checkpoint_line(int g) const;
 
     protected:
@@ -45,8 +44,6 @@ namespace lazy_search {
         virtual ~LazySearch() = default;
 
         virtual void print_statistics() const override;
-
-        //void dump_search_space() const;
     };
 }
 

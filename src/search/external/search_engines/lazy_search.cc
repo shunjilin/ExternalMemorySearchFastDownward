@@ -8,7 +8,6 @@
 #include "../../option_parser.h"
 #include "../../pruning_method.h"
 
-
 #include "../../algorithms/ordered_set.h" // what is this for>
 #include "../../task_utils/successor_generator.h"
 
@@ -35,7 +34,7 @@ namespace lazy_search {
     void LazySearch::initialize() {
         cout << "Conducting best first search"
              << (reopen_closed_nodes ? " with" : " without")
-             << " reopening closed nodes, (real) bound = " << bound
+             << " reopening closed nodes"
              << endl;
         assert(open_list);
         assert(closed_list);
@@ -89,7 +88,6 @@ namespace lazy_search {
     void LazySearch::print_statistics() const {
         statistics.print_detailed_statistics();
         closed_list->print_statistics();
-        //search_space.print_statistics();
     }
 
     SearchStatus LazySearch::step() {
@@ -129,23 +127,10 @@ namespace lazy_search {
         statistics.inc_expanded();
         for (OperatorID op_id : applicable_ops) {
             const GlobalOperator *op = &g_operators[op_id.get_index()];
-            /*if ((node.get_real_g() + op->get_cost()) >= bound)
-              continue;*/ // no need for bound?
 
             GlobalState succ_state = state_registry.get_successor_state(s, op);
             statistics.inc_generated();
             bool is_preferred = preferred_operators.contains(op_id);
-
-            /*
-              Note: we must call notify_state_transition for each heuristic, so
-              don't break out of the for loop early.
-            */
-            // is this necessary?
-            //for (Heuristic *heuristic : heuristics) {
-            //  heuristic->notify_state_transition(s, *op, succ_state);
-            //}
-            // We have not seen this state before.
-            // Evaluate and create a new node.
             
             EvaluationContext eval_context(
                                            succ_state, is_preferred, &statistics);
@@ -187,11 +172,6 @@ namespace lazy_search {
             return false;
     }
     
-
-    /*void LazySearch::dump_search_space() const {
-        search_space.dump();
-        }*/
-
     void LazySearch::start_f_value_statistics(EvaluationContext &eval_context) {
         if (f_evaluator) {
             int f_value = eval_context.get_heuristic_value(f_evaluator);
