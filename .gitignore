@@ -11,3 +11,4 @@ sas_plan
 temp/
 output.sas
 *[#]*
+*compress_closed_list_dynamic.cc
