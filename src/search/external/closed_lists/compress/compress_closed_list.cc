@@ -340,10 +340,13 @@ namespace compress_closed_list {
              << internal_closed.get_load_factor() << "\n";
         cout << "Successful probes into the closed list (includes buffer hits): " << good_probes
              << "\nUnsuccessful probes into the closed list: "
-             << bad_probes << "\n";
-        cout << "Partition table entries: " << partition_table->size() << "\n";
-        cout << "Partition table size: " << partition_table->get_size_in_bytes()
-             << " bytes" << endl;
+             << bad_probes;
+        if (enable_partitioning) {
+            cout << "\nPartition table entries: " << partition_table->size() << "\n";
+            cout << "Partition table size: " << partition_table->get_size_in_bytes()
+                 << " bytes";
+        }
+        cout << endl;
     }
 
     CompressClosedListFactory::

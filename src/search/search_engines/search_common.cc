@@ -45,7 +45,7 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
                             ExternalTieBreakingOpenListFactory>(options);
             
             options.set("reopen_closed", opts.get<bool>("reopen_closed"));
-            options.set("enable_partitioning", true); // set this as user option?
+            options.set("enable_partitioning", false); // set this as user option?
             options.set("internal_closed_gb", 0.5); // set this as user option?
             options.set("double_hashing", true); // set this as user option?
             shared_ptr<ClosedListFactory> closed =
