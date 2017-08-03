@@ -55,18 +55,18 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
 
     tuple<shared_ptr<OpenListFactory>, Evaluator *>
     create_external_astar_open_list_factory_and_f_eval(const options::Options &opts) {
-         GEval *g = new GEval();
-            Evaluator *h = opts.get<Evaluator *>("eval");
-            Evaluator *f = new SumEval(vector<Evaluator *>({g, h}));
-            vector<Evaluator *> evals = {f, h};
-
-            Options options;
-            options.set("evals", evals);
-            // set size of merge runs here instead of hardcoding?
-            shared_ptr<OpenListFactory> open =
-                make_shared<external_astar_open_list::
-                            ExternalAStarOpenListFactory>(options);
-            return make_tuple(open, f);
+        GEval *g = new GEval();
+        Evaluator *h = opts.get<Evaluator *>("eval");
+        Evaluator *f = new SumEval(vector<Evaluator *>({g, h}));
+        vector<Evaluator *> evals = {f, h};
+        
+        Options options;
+        options.set("evals", evals);
+        // set size of merge runs here instead of hardcoding?
+        shared_ptr<OpenListFactory> open =
+            make_shared<external_astar_open_list::
+                        ExternalAStarOpenListFactory>(options);
+        return make_tuple(open, f);
     }
     
 #else
