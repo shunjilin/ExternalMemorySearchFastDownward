@@ -42,6 +42,8 @@ class GlobalState {
     std::vector<int> get_values() const;
     int operator[](int var) const;
     bool operator==(const GlobalState &other) const;
+    bool operator<(const GlobalState& other) const;
+    bool operator>(const GlobalState& other) const;
     const std::vector<PackedStateBin> &get_packed_vec() const;
 
     StateID get_state_id() const;
@@ -62,7 +64,6 @@ class GlobalState {
     static size_t size_in_bytes;
 
     static void initialize_hash_function(std::unique_ptr<StateHash<GlobalState> > hash_function);
-    
 };
 
 

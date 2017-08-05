@@ -82,6 +82,14 @@ bool GlobalState::operator==(const GlobalState& other) const {
     return packedState == other.get_packed_vec();
 }
 
+bool GlobalState::operator<(const GlobalState& other) const {
+    return packedState < other.get_packed_vec();
+}
+
+bool GlobalState::operator>(const GlobalState& other) const {
+    return other < *this;
+}
+
 const std::vector<PackedStateBin> &GlobalState::get_packed_vec() const {
     return packedState;
 }
