@@ -257,9 +257,6 @@ namespace external_astar_open_list {
         assert(evaluators.size() == 1);
         auto f = eval_context.get_heuristic_value_or_infinity(evaluators[0]);
         auto g = entry.get_g();
-        if (f <= 18)
-        cout << "inserting into bucket f: " << f << " g: " << g << endl;
-
 
         if (!exists_bucket(f, g)) create_bucket(f, g);
         if (!entry.write(fg_buckets[f][g]))
