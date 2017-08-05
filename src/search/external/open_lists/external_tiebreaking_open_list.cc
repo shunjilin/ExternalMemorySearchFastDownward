@@ -86,7 +86,6 @@ namespace external_tiebreaking_open_list {
             // tiebreak by highest g value
             for (auto g_bucket = f_bucket->second.rbegin();
                  g_bucket != f_bucket->second.rend(); ++g_bucket) {
-
                 //reverse seek
                 g_bucket->second.seekp(-Entry::size_in_bytes, ios::cur);
                 

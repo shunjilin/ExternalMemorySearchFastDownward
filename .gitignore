@@ -12,3 +12,4 @@ temp/
 output.sas
 *[#]*
 *compress_closed_list_dynamic.cc
+*.dir-locals.el

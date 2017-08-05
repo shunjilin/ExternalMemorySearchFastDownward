@@ -33,6 +33,8 @@ namespace external_astar_search {
         void update_f_value_statistics(const GlobalState &node);
         void print_checkpoint_line(int g) const;
 
+        void expand(const GlobalState &node);
+
     protected:
         virtual void initialize() override;
         virtual SearchStatus step() override;

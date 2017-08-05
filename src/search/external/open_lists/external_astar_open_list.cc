@@ -14,6 +14,7 @@
 #include <set>
 #include <string>
 #include <memory>
+#include <deque>
 
 // for constructing directory
 #include <sys/types.h>
@@ -29,18 +30,11 @@ namespace external_astar_open_list {
     class ExternalAStarOpenList : public OpenList<Entry> {
 
         map<int, map<int, named_fstream> > fg_buckets;
-
         pair<int, int> current_fg; // to track when merge needs to be performed
-        
-        int size;
-
+        int size; // TODO: Track size properly! eliminations due to duplicate detection
         vector<Evaluator *> evaluators;
-
-        //bool allow_unsafe_pruning;
-
-        void update_fg();
-
-        void merge_and_remove_duplicates(int f, int g);
+        void remove_duplicates(int f, int g);
+        bool first_insert = true; // to initialize current_fg
 
     protected:
         virtual void do_insertion(EvaluationContext &eval_context,
@@ -72,168 +66,189 @@ namespace external_astar_open_list {
 
     template<class Entry>
     void ExternalAStarOpenList<Entry>::
-    merge_and_remove_duplicates(int f, int g) {
-        assert(exists_bucket(f, g));
-        auto& target_stream = fg_buckets[f][g];
+    remove_duplicates(int f, int g) {
+        // Performs k-way External Merge Sort, where k is size of the file
+        // divided by the memory buffer allocated for one run (block).
+        // Also performs duplicate detection against itself, and the buffers
+        // f-1, g-1 and f-2, g-2, as per External A* (Edelkamp)
 
-        //Perform External MergeSort
-        //First Pass
-        int k = 0;
-        vector<streampos> k_offsets;
+        named_fstream * target_stream = &fg_buckets[f][g];
+        target_stream->clear();
+        target_stream->seekg(0, ios::beg);
+        
+        vector<streampos> k_offsets; // keeps track of divisions in merge file
 
-        // create buffer for first pass (500mb)
+        // Allocate ~400mb for one block
         size_t block_entries = 4294967296 / Entry::size_in_bytes; // round down
         vector<Entry> block;
         block.reserve(block_entries);
         
-        named_fstream holding(string("temp.bucket")); // holding bucket
-
-        k_offsets.push_back(holding.tellg());
-
-        auto end_of_bucket = target_stream.tellg();
-        target_stream.seekg(0);
-        // is there more efficient way
-        while (target_stream.tellg() != end_of_bucket) {
-            Entry entry;
-            entry.read(target_stream);
+        named_fstream sorted_blocks("temp.bucket");
+ 
+        Entry entry;
+        entry.read(*target_stream);
+        while (!target_stream->eof()) {
             block.push_back(entry);
-            // flush block
+            // flush block if full
             if (block.size() == block_entries) {
                 // sort
                 sort(block.begin(), block.end());
-                for (auto& entry: block) {
-                    entry.write(holding);
+                for (auto& blk_entry: block) {
+                    blk_entry.write(sorted_blocks);
                 }
-                k_offsets.push_back(holding.tellg());
+                k_offsets.push_back(sorted_blocks.tellg());
             }
+            entry.read(*target_stream);
         }
-        // TODO: delete target stream here
+        // flush remainder
+        sort(block.begin(), block.end());
+        for (auto& blk_entry : block) {
+            blk_entry.write(sorted_blocks);
+        }
+        k_offsets.push_back(sorted_blocks.tellg());
 
         vector<Entry>().swap(block); // clear block
-
-        // erase bucket to remove file
-        fg_buckets[f].erase(g); //careful! target_stream dangles
-        
+        fg_buckets[f].erase(g); // erase bucket to remove file
+        target_stream = nullptr;
         
         // Merge step
         size_t buffer_entries = 4096 / Entry::size_in_bytes;
         auto k_value = k_offsets.size();
-        vector< vector<Entry> > merge_buffers(k_value);
+        vector< deque<Entry> > merge_buffers(k_value);
 
-        auto current_k_offsets = k_offsets; // track increments to offsets
-
-        holding.seekg(0, holding.end);
-        k_offsets.push_back(holding.tellg()); // to track end of last merge buffer
+        vector<streampos> current_k_offsets; //track increment to offsets
+        current_k_offsets.push_back(0);
+        current_k_offsets.insert(current_k_offsets.end(), k_offsets.begin(),
+                                 k_offsets.end() - 1);
 
         // initial fill of buffers
         for (size_t k = 0; k < k_value; ++k) {
-            holding.seekg(current_k_offsets[k]);
+            sorted_blocks.seekg(current_k_offsets[k]);
             for (size_t i = 0; i < buffer_entries; ++i) {
-                if (holding.tellg() >= k_offsets[k + 1]) break; // end of block
+                if (sorted_blocks.tellg() >= k_offsets[k]) break; // end of block
                 Entry entry;
-                entry.read(holding);
+                entry.read(sorted_blocks);
                 merge_buffers[k].push_back(entry);
             }
-            sort(merge_buffers[k].rbegin(), merge_buffers[k].rend());
+            current_k_offsets[k] = sorted_blocks.tellg();
         }
 
-        // Pointers to other files
-        shared_ptr<named_fstream> duplicate_stream_1;
-        streampos duplicate_stream_1_end;
+        // For duplicate detection against other buckets
+        named_fstream* duplicate_stream_1 = nullptr;
         Entry duplicate_entry_1;
-        
-        shared_ptr<named_fstream> duplicate_stream_2;
-        streampos duplicate_stream_2_end;
+
+        named_fstream* duplicate_stream_2 = nullptr;
         Entry duplicate_entry_2;
  
         if (exists_bucket(f-1, g-1)) {
-            duplicate_stream_1 =
-                make_shared<named_fstream>(fg_buckets[f-1][g-1]);
-            duplicate_stream_1_end = duplicate_stream_1->tellg();
-            duplicate_stream_1->seekg(0);
-            duplicate_entry_1.read(duplicate_stream_1);
+            duplicate_stream_1 = &(fg_buckets[f-1][g-1]);
+            duplicate_stream_1->clear();   
+            duplicate_stream_1->seekg(0, ios::beg);
+            duplicate_entry_1.read(*duplicate_stream_1);
         }
         if (exists_bucket(f-2, g-2)) {
-            duplicate_stream_2 =
-                make_shared<named_fstream>(fg_buckets[f-2][g-2]);
-            duplicate_stream_2_end = duplicate_stream_2->tellg();
-            duplicate_stream_2->seekg(0);
-            duplicate_entry_2.read(duplicate_stream_2);
+            duplicate_stream_2 = &(fg_buckets[f-2][g-2]);
+            duplicate_stream_2->clear();
+            duplicate_stream_2->seekg(0, ios::beg);
+            duplicate_entry_2.read(*duplicate_stream_2);
         }
 
-        // create output bucket
+        // create output bucket to store non-duplicate entries
         create_bucket(f, g);
-        target_stream = fg_buckets[f][g];
+        target_stream = &fg_buckets[f][g];
+        target_stream->clear();
+        target_stream->seekg(0, ios::beg);
+        
         // output buffer
         vector<Entry> output_buffer;
-        std::unique_ptr<Entry> previous_entry;
-
+        std::unique_ptr<Entry> previous_entry; // track intra bucket duplicates
+        
         while (true) {
-            bool end_of_merge = true;
-            // first find min entry
+            bool end_of_merge = true; // flag to terminate output step
+
+            // look for minimum entry amongst all buffers
             size_t min_index;
-            unique_ptr<Entry> min_entry;
-            //Entry min_entry = merge_buffers[min_index].back();
-            for (size_t k = 1; k < k_value; ++k) {
+            unique_ptr<Entry> min_entry = nullptr;
+           
+            for (size_t k = 0; k < k_value; ++k) {
                 if (merge_buffers[k].empty()) {
-                    if (current_k_offsets[k] == k_offsets[k+1]) continue; // nothing to fetch
-                    // fill merge buffer
-                    holding.seekg(current_k_offsets[k]);
+                    if (current_k_offsets[k] == k_offsets[k]) continue; // nothing to fetch
+                    sorted_blocks.seekg(current_k_offsets[k]); // fill empty merge buffer
                     for (size_t i = 0; i < buffer_entries; ++i) {
-                        if (holding.tellg() >= k_offsets[k + 1]) break; // end of block
+                        if (sorted_blocks.tellg() >= k_offsets[k]) break; // end of block
                         Entry entry;
-                        entry.read(holding);
-                        merge_buffers[k].push_back(entry);
+                        entry.read(sorted_blocks);
+                        merge_buffers[k].push_back(entry); // change this to a deque
                     }
+                    current_k_offsets[k] = sorted_blocks.tellg();
                 }
-                end_of_merge = false;
-                auto& entry = merge_buffers[k].back();
-                if (!min_entry || entry < *min_entry) {
-                    min_entry = utils::make_unique_ptr(entry);
+                end_of_merge = false; // exists an unprocessed entry
+                auto& entry = merge_buffers[k].front();
+                if (!min_entry || entry < *min_entry) { // set candidate min entry
+                    min_entry = utils::make_unique_ptr<Entry>(entry);
                     min_index = k;
                 }
             }
-            if (end_of_merge) {
-                for (auto& entry : output_buffer) {
-                    entry.write(target_stream);
+            if (end_of_merge) break;
+
+            // remove min_entry from merge buffer
+            merge_buffers[min_index].pop_front();
+
+            // intra bucket duplicate detection
+            if (previous_entry) {
+                if (*min_entry == *previous_entry) {
+                    continue;
                 }
-                break;
             }
 
-            // duplicate detection
-            if (previous_entry) {
-                if (*min_entry == *previous_entry) continue;
-            }
-            if (duplicate_stream_1) {
-                if (*min_entry == duplicate_entry_1) continue;
-                while (*min_entry > duplicate_entry_1) { // advance duplicate stream
-                    if (duplicate_stream_1->tellg() == duplicate_stream_1_end) {
+            // inter bucket duplicate detection
+            if (duplicate_stream_1 != nullptr) {
+                while (*min_entry > duplicate_entry_1) { // align streams
+                    duplicate_entry_1.read(*duplicate_stream_1);
+                    if (duplicate_stream_1->eof()) {
                         duplicate_stream_1 = nullptr;
                         break;
                     }
-                    duplicate_entry_1.read(duplicate_stream_1);
                 }
+                if (*min_entry == duplicate_entry_1) {
+                    continue;
+                } 
             }
 
-            if (duplicate_stream_2) {
-                if (*min_entry == duplicate_entry_2) continue;
-                while (*min_entry > duplicate_entry_2) { // advance duplicate stream
-                    if (duplicate_stream_2->tellg() == duplicate_stream_2_end) {
+            // inter bucket duplicate detection
+            if (duplicate_stream_2 != nullptr) {
+                while (*min_entry > duplicate_entry_2) { // align streams
+                    duplicate_entry_2.read(*duplicate_stream_2);
+                    if (duplicate_stream_2->eof()) {
                         duplicate_stream_2 = nullptr;
                         break;
                     }
-                    duplicate_entry_2.read(duplicate_stream_2);
+                }
+                if (*min_entry == duplicate_entry_2) {
+                    continue;
                 }
             }
 
+            // process minimum entry
             output_buffer.emplace_back(*min_entry);
+            previous_entry = utils::make_unique_ptr<Entry>(*min_entry);
+            // flush
             if (output_buffer.size() == buffer_entries) {
                 for (auto& entry : output_buffer) {
-                    entry.write(target_stream);
+                    entry.write(*target_stream);
                 }
-            }              
+            output_buffer.clear();
+            }
         }
-    }
+
+        // flush any remainders
+        for (auto& entry : output_buffer) {
+            entry.write(*target_stream);
+        }
+
+        target_stream->clear();
+        target_stream->seekg(0, ios::beg);
+}
 
     template<class Entry>
     void ExternalAStarOpenList<Entry>::
@@ -241,48 +256,96 @@ namespace external_astar_open_list {
         assert(evaluators.size() == 1);
         auto f = eval_context.get_heuristic_value_or_infinity(evaluators[0]);
         auto g = entry.get_g();
+        if (f <= 18)
+        cout << "inserting into bucket f: " << f << " g: " << g << endl;
+
 
         if (!exists_bucket(f, g)) create_bucket(f, g);
         if (!entry.write(fg_buckets[f][g]))
             throw IOException("Fail to write state to fstream.");
         ++size;
+
+        if (first_insert) {
+            current_fg = make_pair(f, g);
+            fg_buckets[f][g].seekg(0, ios::beg);
+            fg_buckets[f][g].clear();
+            first_insert = false;
+        }
+
     }
 
     template<class Entry>
     Entry ExternalAStarOpenList<Entry>::remove_min() {
-        //TODO is this really removing the minimum f value?
+        
         assert(size > 0);
         Entry min_entry;
 
-        // tiebreak by lowest f value
-        for (auto f_bucket = fg_buckets.begin();
-             f_bucket != fg_buckets.end(); ++f_bucket) {
-            // tiebreak by lowest g value
-            for (auto g_bucket = f_bucket->second.begin();
-                 g_bucket != f_bucket->second.end(); ++g_bucket) {
+        int f, g;
+        tie(f, g) = current_fg;
 
-                //reverse seek
-                g_bucket->second.seekp(-Entry::size_in_bytes, ios::cur);
-                
-                min_entry.read(g_bucket->second);
+        // attempt to read
+        min_entry.read(fg_buckets[f][g]);
 
-                // reurn pointer for subsequent write / read
-                g_bucket->second.seekp(-Entry::size_in_bytes, ios::cur);
-
-                // if g bucket is empty
-                if (g_bucket->second.tellp() == 0) {
-                    auto g = g_bucket->first;
-                    f_bucket->second.erase(g);
-                    // if f bucket is empty
-                    if (f_bucket->second.empty()) {
-                        auto f = f_bucket->first;
-                        fg_buckets.erase(f);
-                    }
-                }
-                --size;
-                return min_entry;
+        // update f, g values, and perform duplicate detection
+        if (fg_buckets[f][g].eof()) {
+            auto g_bucket = fg_buckets[f].begin();
+            while (g_bucket != fg_buckets[f].end() && g_bucket->first <= g) ++g_bucket;
+            if (g_bucket == fg_buckets[f].end()) {
+                // find lowest f
+                auto f_bucket = fg_buckets.begin();
+                while (f_bucket != fg_buckets.end() && f_bucket->first <= f) ++f_bucket;
+                f = f_bucket->first;
+                g = f_bucket->second.begin()->first;
+            } else {
+                g = g_bucket->first;
             }
+            current_fg = make_pair(f, g);
+            
+            remove_duplicates(f, g);
+
+            // Test if vector is duplicate free
+            /*
+            vector<Entry> duplicate_vector;
+            if (exists_bucket(f-1, g-1)) {
+                fg_buckets[f-1][g-1].clear();
+                fg_buckets[f-1][g-1].seekg(0);
+                Entry entry;
+                entry.read(fg_buckets[f-1][g-1]);
+                while (!fg_buckets[f-1][g-1].eof()) {
+                    duplicate_vector.push_back(entry);
+                    entry.read(fg_buckets[f-1][g-1]);
+                }
+            }
+            if (exists_bucket(f-2, g-2)) {
+                fg_buckets[f-2][g-2].clear();
+                fg_buckets[f-2][g-2].seekg(0);
+                Entry entry;
+                entry.read(fg_buckets[f-2][g-2]);
+                while (!fg_buckets[f-2][g-2].eof()) {
+                    duplicate_vector.push_back(entry);
+                    entry.read(fg_buckets[f-2][g-2]);
+                }
+            }
+            Entry entry;
+            entry.read(fg_buckets[f][g]);
+            while (!fg_buckets[f][g].eof()) {
+                duplicate_vector.push_back(entry);
+                entry.read(fg_buckets[f][g]);
+            }
+
+            set<Entry> duplicate_set(duplicate_vector.begin(), duplicate_vector.end());
+            cout << "duplicate set size : " << duplicate_set.size()
+                 << " duplicate vec size : " << duplicate_vector.size() << endl;
+            if (duplicate_set.size() != duplicate_vector.size()) throw;
+
+            fg_buckets[f][g].clear();
+            fg_buckets[f][g].seekg(0, ios::beg);
+            */
+            return remove_min();
         }
+        
+        --size;
+
         return min_entry;
     }
 

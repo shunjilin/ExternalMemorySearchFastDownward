@@ -93,6 +93,18 @@ namespace external_astar_search {
             open_list->clear();
             return SOLVED;
         }
+
+        expand(s);
+        
+        
+        return IN_PROGRESS;
+    }
+
+    void ExternalAStarSearch::expand(const GlobalState& s) {
+
+        // inefficient lookup of f value
+        EvaluationContext s_eval_context(s, false, &statistics);
+        int s_f_value = s_eval_context.get_heuristic_value(f_evaluator);
         
         vector<OperatorID> applicable_ops;
         g_successor_generator->generate_applicable_ops(s, applicable_ops);
@@ -118,18 +130,20 @@ namespace external_astar_search {
 
             EvaluationContext eval_context(
                                            succ_state, is_preferred, &statistics);
+            
             statistics.inc_evaluated_states();
 
             if (open_list->is_dead_end(eval_context)) {
                 statistics.inc_dead_ends();
                 continue;
             }
-
-            open_list->insert(eval_context, succ_state);
-            
-        }
-        
-        return IN_PROGRESS;
+            int succ_f_value = eval_context.get_heuristic_value(f_evaluator);
+            if (succ_f_value == s_f_value && succ_state.get_g() == s.get_g()) {
+                expand(succ_state);
+            } else { // reexpand
+                open_list->insert(eval_context, succ_state);
+            }
+        };
     }
 
         
