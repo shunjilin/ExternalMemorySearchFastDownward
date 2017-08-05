@@ -78,8 +78,8 @@ namespace external_astar_open_list {
         
         vector<streampos> k_offsets; // keeps track of divisions in merge file
 
-        // Allocate ~400mb for one block
-        size_t block_entries = 4294967296 / Entry::size_in_bytes; // round down
+        // Allocate ~500mb for one block
+        size_t block_entries = pow(2,32) / (8 * Entry::size_in_bytes); // round down
         vector<Entry> block;
         block.reserve(block_entries);
         
@@ -161,6 +161,7 @@ namespace external_astar_open_list {
         
         // output buffer
         vector<Entry> output_buffer;
+        output_buffer.reserve(buffer_entries);
         std::unique_ptr<Entry> previous_entry; // track intra bucket duplicates
         
         while (true) {
