@@ -36,6 +36,10 @@ namespace external_astar_open_list {
         void remove_duplicates(int f, int g);
         bool first_insert = true; // to initialize current_fg
 
+        bool exists_bucket(int f, int g) const;
+        void create_bucket(int f, int g);
+        string get_bucket_string(int f, int g) const;
+
     protected:
         virtual void do_insertion(EvaluationContext &eval_context,
                                   const Entry &entry) override;
@@ -50,9 +54,7 @@ namespace external_astar_open_list {
         virtual void get_involved_heuristics(set<Heuristic *> &hset) override;
         virtual bool is_dead_end(EvaluationContext &eval_context) const override;
         virtual bool is_reliable_dead_end(EvaluationContext &eval_context) const override;
-        string get_bucket_string(int f, int g) const;
-        bool exists_bucket(int f, int g) const; // TODO: these should be private?
-        void create_bucket(int f, int g);
+
     };
 
     
