@@ -65,6 +65,9 @@ public:
     */
 #ifdef EXTERNAL_SEARCH
     virtual Entry remove_min() = 0;
+
+    // certain external search methods reconstruct paths using open lists
+    virtual std::vector<const GlobalOperator*> trace_path(const Entry&);
 #else
     virtual Entry remove_min(std::vector<int> *key = 0) = 0;
 #endif
@@ -175,5 +178,14 @@ template<class Entry>
 bool OpenList<Entry>::only_contains_preferred_entries() const {
     return only_preferred;
 }
+
+#ifdef EXTERNAL_SEARCH
+// default implementation returns empty vector
+template<class Entry>
+std::vector<const GlobalOperator *>
+OpenList<Entry>::trace_path(const Entry&) {
+    return std::vector<const GlobalOperator*>();
+}
+#endif
 
 #endif

@@ -164,8 +164,7 @@ namespace external_astar_search {
     bool ExternalAStarSearch::check_goal_and_set_plan(const GlobalState &state) {
         if (test_goal(state)) {
             cout << "Solution found!" << endl;
-            //TODO:implement!
-            //set_plan(closed_list->trace_path(state));
+            set_plan(open_list->trace_path(state));
             return true;
         }
             return false;

@@ -9,6 +9,9 @@
 #include "../file_utility.h"
 #include "../options/errors.h"
 
+#include "../../global_operator.h"
+#include "../../globals.h" // for g_operator
+
 #include <utility>
 #include <map>
 #include <set>
@@ -55,8 +58,8 @@ namespace external_astar_open_list {
         virtual bool is_dead_end(EvaluationContext &eval_context) const override;
         virtual bool is_reliable_dead_end(EvaluationContext &eval_context) const override;
 
+        virtual vector<const GlobalOperator*> trace_path(const Entry &entry) override;
     };
-
     
     template<class Entry>
     ExternalAStarOpenList<Entry>::ExternalAStarOpenList(const Options &opts)
@@ -251,7 +254,7 @@ namespace external_astar_open_list {
 
         target_stream->clear();
         target_stream->seekg(0, ios::beg);
-}
+    }
 
     template<class Entry>
     void ExternalAStarOpenList<Entry>::
@@ -427,6 +430,49 @@ namespace external_astar_open_list {
                               forward_as_tuple(get_bucket_string(f, g)));
         // TODO: do check
         //if (fg_buckets[f][g].is_open())
+    }
+
+    template<class Entry>
+    vector<const GlobalOperator *> ExternalAStarOpenList<Entry>::
+    trace_path(const Entry &entry) {
+        // This is only works with unit cost domain (no zero cost actions)
+        // For zero cost actions, buckets with g and g-1 both have to be checked
+        vector<const GlobalOperator *> path;
+        Entry current_state = entry;
+        
+        while (true) {
+        startloop:
+            if (current_state.get_creating_operator() == -1) {
+                assert(current_state.get_parent_state_id == StateID::no_state);
+                break;
+            }
+            const GlobalOperator *op =
+                &g_operators[current_state.get_creating_operator()];
+            path.push_back(op);
+            // parent is in bucket g-1
+            // check all buckets of g-1
+            for (auto f_it = fg_buckets.begin(); f_it != fg_buckets.end(); ++f_it) {
+                for (auto g_it = f_it->second.begin();
+                     g_it != f_it->second.end(); ++g_it) {
+                    if (g_it->first == current_state.get_g()-1) {
+                        g_it->second.clear();
+                        g_it->second.seekg(0, ios::beg);
+                        Entry node;
+                        node.read(g_it->second);
+                        while (!g_it->second.eof()) {
+                            if (node.get_state_id() ==
+                                current_state.get_parent_state_id()) {
+                                current_state = node;
+                                goto startloop;
+                            }
+                            node.read(g_it->second);
+                        }
+                    }
+                }
+            }
+        }
+        reverse(path.begin(), path.end());
+        return path;
     }
 
     
