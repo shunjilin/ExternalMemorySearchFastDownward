@@ -79,6 +79,9 @@ namespace external_astar_search {
     
     void ExternalAStarSearch::print_statistics() const {
         statistics.print_detailed_statistics();
+        // Find better place to put the following logging
+        cout << "Size of a node: " << GlobalState::get_size_in_bytes()
+             << " bytes" << endl;
     }
 
     SearchStatus ExternalAStarSearch::step() {
