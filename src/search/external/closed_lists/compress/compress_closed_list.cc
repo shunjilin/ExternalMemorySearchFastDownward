@@ -15,7 +15,6 @@
 #include <vector>
 #include <memory>
 #include <unordered_set>
-#include <exception> // remove?
 #include <cmath> // for pow
 
 #include <sys/mman.h>
