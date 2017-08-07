@@ -20,6 +20,9 @@ std::unique_ptr<StateHash<GlobalState> > GlobalState::hasher = nullptr;
 std::size_t GlobalState::packedState_bytes = 0;
 std::size_t GlobalState::size_in_bytes = 0;
 
+std::size_t GlobalState::get_packedState_bytes() { return packedState_bytes; }
+std::size_t GlobalState::get_size_in_bytes() { return size_in_bytes; }
+
 
 // Initialize memory information of states, as well as primary hash function used.
 // Should only be called after states have been packed by int_packer.

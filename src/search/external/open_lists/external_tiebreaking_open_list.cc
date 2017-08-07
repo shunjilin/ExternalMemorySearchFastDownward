@@ -86,12 +86,12 @@ namespace external_tiebreaking_open_list {
             for (auto g_bucket = f_bucket->second.rbegin();
                  g_bucket != f_bucket->second.rend(); ++g_bucket) {
                 //reverse seek
-                g_bucket->second.seekp(-Entry::size_in_bytes, ios::cur);
+                g_bucket->second.seekp(-Entry::get_size_in_bytes(), ios::cur);
                 
                 min_entry.read(g_bucket->second);
 
                 // reurn pointer for subsequent write / read
-                g_bucket->second.seekp(-Entry::size_in_bytes, ios::cur);
+                g_bucket->second.seekp(-Entry::get_size_in_bytes(), ios::cur);
 
                 // if g bucket is empty
                 if (g_bucket->second.tellp() == 0) {

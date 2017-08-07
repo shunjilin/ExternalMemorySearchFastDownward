@@ -95,7 +95,7 @@ namespace compress_closed_list {
     void CompressClosedList<Entry>::
     initialize() {
         // set max buffer entries
-        max_buffer_entries = max_buffer_size_in_bytes / Entry::size_in_bytes;
+        max_buffer_entries = max_buffer_size_in_bytes / Entry::get_size_in_bytes();
 
         // initialize primary hash
         // TODO: select hash functions from options
@@ -117,7 +117,7 @@ namespace compress_closed_list {
         
         // initialize external closed list
         external_closed_bytes =
-            internal_closed.get_max_entries() * Entry::size_in_bytes;
+            internal_closed.get_max_entries() * Entry::get_size_in_bytes();
         cout << "external closed bytes " << external_closed_bytes << endl;
 
         // initialize external closed list
@@ -309,7 +309,7 @@ namespace compress_closed_list {
     void CompressClosedList<Entry>::
     read_external_at(Entry& entry, size_t index) const {
         entry.read(static_cast<char *>
-                   (external_closed + index * Entry::size_in_bytes));
+                   (external_closed + index * Entry::get_size_in_bytes()));
     }
 
     // write helper function to encapsulate pointer manipulation
@@ -317,7 +317,7 @@ namespace compress_closed_list {
     void CompressClosedList<Entry>::
     write_external_at(const Entry& entry, size_t index) {
         entry.write(static_cast<char *>
-                    (external_closed + index * Entry::size_in_bytes));
+                    (external_closed + index * Entry::get_size_in_bytes()));
     }
 
     template<class Entry>
@@ -332,7 +332,7 @@ namespace compress_closed_list {
 
     template<class Entry>
     void CompressClosedList<Entry>::print_statistics() const {
-        cout << "Size of a node: " << Entry::size_in_bytes << " bytes\n";
+        cout << "Size of a node: " << Entry::get_size_in_bytes() << " bytes\n";
         cout << "Number of entries in the closed list at the end of search : "
              << internal_closed.get_n_entries() << "\n";
         cout << "Load factor of the closed list at the end of search : "

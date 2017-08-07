@@ -25,11 +25,15 @@ class GlobalState {
     size_t parent_hash_value = 0; 
 
     void initialize_state_info();
+
+    static size_t packedState_bytes;
+    static size_t size_in_bytes;
     
     // Primary hash function to prevent unnecessary creation of hash function
     // resources (bitstrings in the case of zobrist hash)
     // Initialization delegated to class that needs it, e.g. closed list
     static std::unique_ptr<StateHash<GlobalState> > hasher;
+    
     GlobalState(StateID state_id);
  public:
     GlobalState();
@@ -59,9 +63,9 @@ class GlobalState {
     // if hash not initialized, returns 0
     size_t get_hash_value() const;
     size_t get_parent_hash_value() const;
-    
-    static size_t packedState_bytes;
-    static size_t size_in_bytes;
+
+    static size_t get_packedState_bytes();
+    static size_t get_size_in_bytes();
 
     static void initialize_hash_function(std::unique_ptr<StateHash<GlobalState> > hash_function);
 };
