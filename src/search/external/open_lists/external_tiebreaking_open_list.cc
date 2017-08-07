@@ -29,10 +29,12 @@ namespace external_tiebreaking_open_list {
         int size;
 
         vector<Evaluator *> evaluators;
-
-        
+    
         //bool allow_unsafe_pruning;
 
+        string get_bucket_string(int f, int g) const;
+        bool exists_bucket(int f, int g) const;
+        void create_bucket(int f, int g);
     protected:
         virtual void do_insertion(EvaluationContext &eval_context,
                                   const Entry &entry) override;
@@ -47,9 +49,6 @@ namespace external_tiebreaking_open_list {
         virtual void get_involved_heuristics(set<Heuristic *> &hset) override;
         virtual bool is_dead_end(EvaluationContext &eval_context) const override;
         virtual bool is_reliable_dead_end(EvaluationContext &eval_context) const override;
-        string get_bucket_string(int f, int g) const;
-        bool exists_bucket(int f, int g) const;
-        void create_bucket(int f, int g);
     };
 
     
