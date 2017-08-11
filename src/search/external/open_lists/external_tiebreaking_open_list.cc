@@ -28,7 +28,7 @@ namespace external_tiebreaking_open_list {
         
         int size;
 
-        vector<Evaluator *> evaluators;
+        vector<Evaluator *> evaluators; // f, h
 
         string get_bucket_string(int f, int g) const;
         bool exists_bucket(int f, int g) const;

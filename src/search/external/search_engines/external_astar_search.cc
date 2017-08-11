@@ -96,18 +96,13 @@ namespace external_astar_search {
             open_list->clear();
             return SOLVED;
         }
-
+ 
         expand(s);
-        
         
         return IN_PROGRESS;
     }
 
     void ExternalAStarSearch::expand(const GlobalState& s) {
-
-        // inefficient lookup of f value
-        EvaluationContext s_eval_context(s, false, &statistics);
-        int s_f_value = s_eval_context.get_heuristic_value(f_evaluator);
         
         vector<OperatorID> applicable_ops;
         g_successor_generator->generate_applicable_ops(s, applicable_ops);
@@ -120,6 +115,7 @@ namespace external_astar_search {
 
         // This evaluates the expanded state (again) to get preferred ops
         EvaluationContext eval_context(s, false, &statistics, true);
+        int f = eval_context.get_heuristic_value(f_evaluator);
         ordered_set::OrderedSet<OperatorID> preferred_operators =
             collect_preferred_operators(eval_context, preferred_operator_heuristics);
 
@@ -141,8 +137,9 @@ namespace external_astar_search {
                 continue;
             }
             int succ_f_value = eval_context.get_heuristic_value(f_evaluator);
-            if (succ_f_value == s_f_value && succ_state.get_g() == s.get_g()) {
-                expand(succ_state);
+            // Note: this can lead to stack overflow
+            if (succ_f_value == f && succ_state.get_g() == s.get_g()) {
+                return expand(succ_state);
             } else { // reexpand
                 open_list->insert(eval_context, succ_state);
             }
@@ -152,14 +149,14 @@ namespace external_astar_search {
         
     pair<GlobalState, bool> ExternalAStarSearch::fetch_next_node() {
         while (true) {
-            if (open_list->empty()) {
+            try {
+                GlobalState state = open_list->remove_min(); 
+                update_f_value_statistics(state);
+                return make_pair(state, true);
+            } catch (...) {
                 cout << "Completely explored state space -- no solution!" << endl;
                 return make_pair(GlobalState(), false);
             }
-
-            GlobalState state = open_list->remove_min();
-            update_f_value_statistics(state);
-            return make_pair(state, true);
         }
     }
 
