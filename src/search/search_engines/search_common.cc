@@ -31,7 +31,7 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
 #ifdef EXTERNAL_SEARCH
     // SHUNJI TODO: give better name? includes specialization for compress
     tuple<shared_ptr<OpenListFactory>, shared_ptr<ClosedListFactory>, Evaluator *>
-    create_astar_open_list_factory_closed_list_factory_and_f_eval(const options::Options &opts) {
+    create_compress_factories_and_f_eval(const options::Options &opts) {
             GEval *g = new GEval();
             Evaluator *h = opts.get<Evaluator *>("eval");
             Evaluator *f = new SumEval(vector<Evaluator *>({g, h}));
