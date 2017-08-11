@@ -113,7 +113,7 @@ fast_downward_plugin(
         external/file_utility
         external/utils/wall_timer       
 
-    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC PDBS MAS_HEURISTIC PLUGIN_COMPRESS_ASTAR PLUGIN_EXTERNAL_ASTAR
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC PDBS MAS_HEURISTIC PLUGIN_COMPRESS_ASTAR PLUGIN_EXTERNAL_ASTAR PLUGIN_ASTAR_DDD
     DEPENDENCY_ONLY
 )
 
@@ -128,7 +128,7 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
-    NAME PLUGIN_EXTERNAL_ASTAR # name conflict
+    NAME PLUGIN_EXTERNAL_ASTAR
     HELP "External A* (Edelkamp) search"
     SOURCES
         external/search_engines/plugin_external_astar
@@ -137,14 +137,49 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME PLUGIN_ASTAR_DDD
+    HELP "A*-DDD (Korf, Hatem) search"
+    SOURCES
+        external/search_engines/plugin_astar_ddd
+    DEPENDS ASTAR_DDD_SEARCH EXTERNAL_SEARCH_COMMON
+    DEPENDENCY_ONLY
+ )
+
+fast_downward_plugin(
     NAME EXTERNAL_SEARCH_COMMON
     HELP "Basic classes used for all external search engines"
     SOURCES
         search_engines/search_common
-    DEPENDS G_EVALUATOR SUM_EVALUATOR EXTERNAL_TIEBREAKING_OPEN_LIST EXTERNAL_ASTAR_OPEN_LIST COMPRESS_CLOSED_LIST WEIGHTED_EVALUATOR
+    DEPENDS G_EVALUATOR SUM_EVALUATOR WEIGHTED_EVALUATOR HASH_FUNCTIONS
     DEPENDENCY_ONLY
 )
 
+fast_downward_plugin(
+    NAME EXTERNAL_LAZY_SEARCH
+    HELP "Lazy external search algorithm"
+    SOURCES
+        external/search_engines/lazy_search
+    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR EXTERNAL_TIEBREAKING_OPEN_LIST COMPRESS_CLOSED_LIST
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME EXTERNAL_ASTAR_SEARCH
+    HELP "External A* (Edelkamp) search algorithm"
+    SOURCES
+        external/search_engines/external_astar_search
+    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR EXTERNAL_ASTAR_OPEN_LIST
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME ASTAR_DDD_SEARCH
+    HELP "A*-DDD (Korf, Hatem) search algorithm"
+    SOURCES
+        external/search_engines/astar_ddd_search
+    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR ASTAR_DDD_OPEN_LIST
+    DEPENDENCY_ONLY
+)
 
 fast_downward_plugin(
     NAME EXTERNAL_TIEBREAKING_OPEN_LIST
@@ -161,25 +196,15 @@ fast_downward_plugin(
         external/open_lists/external_astar_open_list
     DEPENDENCY_ONLY
 )
-  
+
 fast_downward_plugin(
-    NAME EXTERNAL_LAZY_SEARCH
-    HELP "Lazy external search algorithm"
+    NAME ASTAR_DDD_OPEN_LIST
+    HELP "A*-DDD open list"
     SOURCES
-        external/search_engines/lazy_search
-    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR
+        external/open_lists/astar_ddd_open_list
     DEPENDENCY_ONLY
 )
 
-fast_downward_plugin(
-    NAME EXTERNAL_ASTAR_SEARCH
-    HELP "External A* (Edelkamp) search algorithm"
-    SOURCES
-        external/search_engines/external_astar_search
-    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR
-    DEPENDENCY_ONLY
-)
-  
 fast_downward_plugin(
     NAME COMPRESS_CLOSED_LIST
     HELP "Compress closed list"
@@ -194,6 +219,7 @@ fast_downward_plugin(
     NAME HASH_FUNCTIONS
     HELP "HASH FUNCTIONS"
     SOURCES
+        external/hash_functions/state_hash
         external/hash_functions/zobrist
     DEPENDENCY_ONLY
 )

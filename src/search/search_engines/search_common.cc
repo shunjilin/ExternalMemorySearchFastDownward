@@ -12,6 +12,7 @@
 #include "../external/closed_lists/compress/compress_closed_list.h"
 #include "../external/open_lists/external_tiebreaking_open_list.h"
 #include "../external/open_lists/external_astar_open_list.h"
+#include "../external/open_lists/astar_ddd_open_list.h"
 #include <tuple>
 #else
 #include "../open_lists/alternation_open_list.h"
@@ -29,7 +30,6 @@ using SumEval = sum_evaluator::SumEvaluator;
 using WeightedEval = weighted_evaluator::WeightedEvaluator;
 
 #ifdef EXTERNAL_SEARCH
-    // SHUNJI TODO: give better name? includes specialization for compress
     tuple<shared_ptr<OpenListFactory>, shared_ptr<ClosedListFactory>, Evaluator *>
     create_compress_factories_and_f_eval(const options::Options &opts) {
             GEval *g = new GEval();
@@ -68,6 +68,24 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
                         ExternalAStarOpenListFactory>(options);
         return make_tuple(open, f);
     }
+
+    tuple<shared_ptr<OpenListFactory>, Evaluator *>
+    create_astar_ddd_open_list_factory_and_f_eval(const options::Options &opts) {
+        GEval *g = new GEval();
+        Evaluator *h = opts.get<Evaluator *>("eval");
+        Evaluator *f = new SumEval(vector<Evaluator *>({g, h}));
+        vector<Evaluator *> evals = {f, h};
+        
+        Options options;
+        options.set("reopen_closed", opts.get<bool>("reopen_closed"));
+        options.set("evals", evals);
+        // set size of merge runs here instead of hardcoding?
+        shared_ptr<OpenListFactory> open =
+            make_shared<astar_ddd_open_list::
+                        AStarDDDOpenListFactory>(options);
+        return make_tuple(open, f);
+    }
+    
     
 #else
     
