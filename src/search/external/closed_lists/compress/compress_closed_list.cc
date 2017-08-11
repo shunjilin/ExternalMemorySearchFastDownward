@@ -98,14 +98,12 @@ namespace compress_closed_list {
         max_buffer_entries = max_buffer_size_in_bytes / Entry::get_size_in_bytes();
 
         // initialize primary hash
-        // TODO: select hash functions from options
         Entry::initialize_hash_function(utils::make_unique_ptr<ZobristHash<Entry> >());
         
         // initialize partition table
         if (enable_partitioning) {
             partition_table =
                 utils::make_unique_ptr<MappingTable>(max_buffer_entries);
-            // TODO: select hash functions from options
 
             partition_hash =
                 utils::make_unique_ptr<ZobristHash<Entry> >();
@@ -131,7 +129,7 @@ namespace compress_closed_list {
         
         external_closed =
             static_cast<char *>(mmap(NULL, external_closed_bytes,
-                                     PROT_READ | PROT_WRITE, MAP_SHARED, // what happens if use MAP_PRIVATE?
+                                     PROT_READ | PROT_WRITE, MAP_SHARED,
                                      external_closed_fd, 0));
         if (external_closed == MAP_FAILED)
             throw IOException("Fail to mmap closed list file");
@@ -266,7 +264,6 @@ namespace compress_closed_list {
                 assert(current_state.get_parent_state_id == StateID::no_state);
                 break;
             }
-            //assert(utils::in_bounds(info.creating_operator, g_operators));
 
             // use of g_operators creates dependency on globals.h
             const GlobalOperator *op =
@@ -359,8 +356,8 @@ namespace compress_closed_list {
             <CompressClosedList<StateClosedListEntry> >(options);
     }
 
-        static shared_ptr<ClosedListFactory> _parse(OptionParser &parser) {
-            // These are set in search_engines/search_common
+    static shared_ptr<ClosedListFactory> _parse(OptionParser &parser) {
+        // These are set in search_engines/search_common
         parser.document_synopsis("Compress closed list", "");
         parser.add_option<bool>(
                                 "reopen_closed",
