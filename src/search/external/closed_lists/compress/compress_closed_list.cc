@@ -134,6 +134,9 @@ namespace compress_closed_list {
         if (external_closed == MAP_FAILED)
             throw IOException("Fail to mmap closed list file");
 
+        if (madvise(external_closed, external_closed_bytes, MADV_RANDOM) < 0)
+            throw IOException("Fail to give madvise for closed list file");
+
         initialized = true;
     }
 
