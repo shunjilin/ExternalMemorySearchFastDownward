@@ -53,7 +53,7 @@ namespace astar_ddd_open_list {
         vector<unique_ptr<named_fstream> > next_buckets;
         vector<unique_ptr<named_fstream> > closed_buckets;
 
-        unique_ptr<named_fstream> fmin_bucket; // for recursive expansion
+        unique_ptr<named_fstream> recursive_bucket; // for recursive expansion
 
         void create_bucket(int bucket_index, BucketType bucket_type);
         string get_bucket_string(int bucket_index, BucketType bucket_type) const;
@@ -88,12 +88,14 @@ namespace astar_ddd_open_list {
         evaluators(opts.get_list<Evaluator *>("evals")),
         open_buckets(n_buckets),
         next_buckets(n_buckets),
-        closed_buckets(n_buckets),
-        fmin_bucket(utils::make_unique_ptr<named_fstream>
-                    (string("open_list_buckets/fmin_bucket")))
+        closed_buckets(n_buckets)
     {
         // create directory for open list files if not exist
         mkdir("open_list_buckets", 0744);
+        
+        recursive_bucket = utils::make_unique_ptr<named_fstream>
+            (string("open_list_buckets/recursive.bucket"));
+
         // create buckets
         for (int i = 0; i < n_buckets; ++i) {
             create_bucket(i, BucketType::open);
@@ -176,8 +178,8 @@ namespace astar_ddd_open_list {
         //cout << "inserting " << entry.get_state_id() << endl;
         assert(evaluators.size() == 1);
         if (!first_insert &&
-            eval_context.get_heuristic_value(evaluators[0]) == min_f) {
-            entry.write(*fmin_bucket);
+            eval_context.get_heuristic_value(evaluators[0]) <= min_f) {
+            entry.write(*recursive_bucket);
             return;
         }
         
@@ -204,10 +206,10 @@ namespace astar_ddd_open_list {
     Entry AStarDDDOpenList<Entry>::remove_min() {
         //cout << "removing min" << endl;
         Entry min_entry;
-        if (fmin_bucket->tellp() != 0) {
-            fmin_bucket->seekg(-Entry::get_size_in_bytes(), ios::cur);
-            min_entry.read(*fmin_bucket);
-            fmin_bucket->seekg(-Entry::get_size_in_bytes(), ios::cur);
+        if (recursive_bucket->tellg() != 0) {
+            recursive_bucket->seekg(-Entry::get_size_in_bytes(), ios::cur);
+            min_entry.read(*recursive_bucket);
+            recursive_bucket->seekg(-Entry::get_size_in_bytes(), ios::cur);
             min_entry.write(*closed_buckets[min_entry.get_hash_value() % n_buckets]);
             return min_entry;
         }
@@ -240,9 +242,10 @@ namespace astar_ddd_open_list {
        
         remove_duplicates();
         current_bucket = 0;
-        fmin_bucket.reset(nullptr);
-        fmin_bucket =
-            utils::make_unique_ptr<named_fstream>(string("open_list_buckets/fmin_bucket"));
+        recursive_bucket.reset(nullptr);
+        recursive_bucket =
+            utils::make_unique_ptr<named_fstream>
+            (string("open_list_buckets/recursive.bucket"));
         
        
         return remove_min();

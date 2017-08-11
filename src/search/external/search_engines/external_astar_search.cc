@@ -115,7 +115,6 @@ namespace external_astar_search {
 
         // This evaluates the expanded state (again) to get preferred ops
         EvaluationContext eval_context(s, false, &statistics, true);
-        int f = eval_context.get_heuristic_value(f_evaluator);
         ordered_set::OrderedSet<OperatorID> preferred_operators =
             collect_preferred_operators(eval_context, preferred_operator_heuristics);
 
@@ -136,13 +135,7 @@ namespace external_astar_search {
                 statistics.inc_dead_ends();
                 continue;
             }
-            int succ_f_value = eval_context.get_heuristic_value(f_evaluator);
-            // Note: this can lead to stack overflow
-            if (succ_f_value == f && succ_state.get_g() == s.get_g()) {
-                return expand(succ_state);
-            } else { // reexpand
-                open_list->insert(eval_context, succ_state);
-            }
+            open_list->insert(eval_context, succ_state);
         };
     }
 
