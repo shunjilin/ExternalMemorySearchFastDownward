@@ -124,7 +124,7 @@ namespace compress_closed_list {
         if (external_closed_fd < 0)
             throw IOException("Fail to create closed list file");
         
-        if (fallocate(external_closed_fd, 0, 0, external_closed_bytes) < 0)
+        if (posix_fallocate64(external_closed_fd, 0, external_closed_bytes) < 0)
             throw IOException("Fail to fallocate closed list file");
         
         external_closed =
