@@ -29,13 +29,12 @@ PointerTable::PointerTable(size_t ptr_table_size_in_bytes)
     size_t big_ptr_size_in_bits = get_ptr_size_in_bits(ptr_table_size_in_bytes);
     
     // need to check if size is optimal
-    size_t small_ptr_size_in_bits = 0;
-    
-    if (ptr_size_in_bits > 1) // guard against edge case where ptr is 1 bit
-        small_ptr_size_in_bits = big_ptr_size_in_bits - 1;
+    size_t small_ptr_size_in_bits =
+        big_ptr_size_in_bits > 0 ? big_ptr_size_in_bits - 1 : 0;
     
     size_t big_ptr_entries = ptr_table_size_in_bytes * 8 / big_ptr_size_in_bits;
     size_t small_ptr_entries = pow(2, small_ptr_size_in_bits);
+    
 #ifdef PRIME
     for (; big_ptr_entries > 0; --big_ptr_entries) {
         if (miller_rabin_test(big_ptr_entries, 25)) break;
