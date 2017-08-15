@@ -6,8 +6,8 @@
 
 #include "../../utils/memory.h"
 
-#include "../file_utility.h"
-#include "../options/errors.h"
+#include "../utils/named_fstream.h"
+#include "../utils/errors.h"
 
 #include "../../global_operator.h"
 #include "../../globals.h" // for g_operator
@@ -108,11 +108,9 @@ namespace astar_ddd_open_list {
     void AStarDDDOpenList<Entry>::
     remove_duplicates() {
         min_f = numeric_limits<int>::max();
-        //cout << "removing duplicates" << endl;
+        
         for (int i = 0; i < n_buckets; ++i) { // for each bucket
-
             unordered_set<Entry> hash_table;
-
             // hash next list entries
             next_buckets[i]->clear();
             next_buckets[i]->seekg(0, ios::beg);
@@ -135,7 +133,6 @@ namespace astar_ddd_open_list {
             next_buckets[i]->clear();
             next_buckets[i]->seekg(0, ios::beg);
 
-            //cout << " hash list entries " << endl;
             // hash closed list entries against next list entries, deleting
             // duplicates
             closed_buckets[i]->clear();
@@ -151,7 +148,6 @@ namespace astar_ddd_open_list {
             }
             closed_buckets[i]->clear();
             closed_buckets[i]->seekg(0, ios::end);
-            //cout << " hash closed entries " << endl;
 
             open_buckets[i].reset(nullptr); // erase old open bucket
             create_bucket(i, BucketType::open);
@@ -167,15 +163,15 @@ namespace astar_ddd_open_list {
             // reset open
             open_buckets[i]->clear();
             open_buckets[i]->seekg(0, ios::beg);
-            //cout << "cleared open" << endl;
         }
-        //cout << "min f " << min_f << endl;
+        // No more entries
+        if (min_f == numeric_limits<int>::max())
+            throw OpenListEmpty();
     }
 
     template<class Entry>
     void AStarDDDOpenList<Entry>::
     do_insertion(EvaluationContext &eval_context, const Entry &entry) {
-        //cout << "inserting " << entry.get_state_id() << endl;
         assert(evaluators.size() == 1);
         if (!first_insert &&
             eval_context.get_heuristic_value(evaluators[0]) <= min_f) {
@@ -204,7 +200,6 @@ namespace astar_ddd_open_list {
 
     template<class Entry>
     Entry AStarDDDOpenList<Entry>::remove_min() {
-        //cout << "removing min" << endl;
         Entry min_entry;
         if (recursive_bucket->tellg() != 0) {
             recursive_bucket->seekg(-Entry::get_size_in_bytes(), ios::cur);
@@ -217,12 +212,12 @@ namespace astar_ddd_open_list {
         while (current_bucket != n_buckets) {
             // attempt read from current bucket
             min_entry.read(*open_buckets[current_bucket]);
-            //cout << " reading entry " << endl;
+            
             if (open_buckets[current_bucket]->eof()) { // exhausted current bucket
                 ++current_bucket;
                 continue;
             }
-            //cout << "valid entry? " << endl;
+           
             EvaluationContext eval_context(min_entry, false, nullptr);
             int entry_f = eval_context.get_heuristic_value(evaluators[0]);
             if (entry_f == min_f) {
@@ -230,24 +225,17 @@ namespace astar_ddd_open_list {
                 return min_entry;
             } else {
                 // transfer unexpanded to next bucket
-                //cout <<  "transfer to next bucket" << endl;
                 min_entry.write(*next_buckets[current_bucket]);
             }
         }
-
-        //cout << "no entries? " << endl;
-        //cout << "next f is " << next_f << endl;
-       
         // exhausted all buckets
-       
         remove_duplicates();
         current_bucket = 0;
         recursive_bucket.reset(nullptr);
         recursive_bucket =
             utils::make_unique_ptr<named_fstream>
             (string("open_list_buckets/recursive.bucket"));
-        
-       
+             
         return remove_min();
     }
 

@@ -13,6 +13,6 @@ public:
         std::runtime_error("IO Exception Raised: " + message) {}
 };
 
-
+struct OpenListEmpty {};
 
 #endif

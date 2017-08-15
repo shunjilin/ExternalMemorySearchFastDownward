@@ -6,8 +6,8 @@
 
 #include "../../utils/memory.h"
 
-#include "../file_utility.h"
-#include "../options/errors.h"
+#include "../utils/named_fstream.h"
+#include "../utils/errors.h"
 
 #include "../../global_operator.h"
 #include "../../globals.h" // for g_operator
@@ -360,7 +360,7 @@ namespace external_astar_open_list {
             fg_buckets[f][g].seekg(0, ios::beg);
             */
             if (fg_buckets[f][g].peek() == char_traits<char>::eof())
-                throw; // no more entries
+                throw OpenListEmpty(); // no more entries
             recursive_bucket.reset();
             recursive_bucket =
                 utils::make_unique_ptr<named_fstream>

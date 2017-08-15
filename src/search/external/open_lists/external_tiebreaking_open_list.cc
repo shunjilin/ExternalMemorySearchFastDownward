@@ -6,8 +6,8 @@
 
 #include "../../utils/memory.h"
 
-#include "../file_utility.h"
-#include "../options/errors.h"
+#include "../utils/named_fstream.h"
+#include "../utils/errors.h"
 
 #include <utility>
 #include <map>

@@ -6,6 +6,7 @@
 #include "../../open_list_factory.h"
 #include "../../option_parser.h"
 #include "../../pruning_method.h"
+#include "../utils/errors.h"
 
 
 #include "../../algorithms/ordered_set.h"
@@ -146,9 +147,11 @@ namespace external_astar_search {
                 GlobalState state = open_list->remove_min(); 
                 update_f_value_statistics(state);
                 return make_pair(state, true);
-            } catch (...) {
+            } catch (OpenListEmpty& e) {
                 cout << "Completely explored state space -- no solution!" << endl;
                 return make_pair(GlobalState(), false);
+            } catch (...) {
+                throw;
             }
         }
     }

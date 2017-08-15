@@ -1,5 +1,5 @@
-#ifndef FILE_UTILITY_H
-#define FILE_UTILITY_H
+#ifndef NAMED_FSTREAM_H
+#define NAMED_FSTREAM_H
 
 #include <fstream>
 #include <string>

@@ -10,7 +10,7 @@
 #include "../../../globals.h"
 #include "../../hash_functions/state_hash.h"
 #include "../../hash_functions/zobrist.h"
-#include "../../options/errors.h"
+#include "../../utils/errors.h"
 
 #include <vector>
 #include <memory>

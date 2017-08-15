@@ -1,5 +1,5 @@
-#include "file_utility.h"
-#include "options/errors.h"
+#include "named_fstream.h"
+#include "errors.h"
 #include <iostream>
 
 named_fstream::named_fstream(const string file_name, ios_base::openmode mode) :

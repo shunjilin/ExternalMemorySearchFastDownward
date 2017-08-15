@@ -110,8 +110,9 @@ fast_downward_plugin(
 
         external/closed_list
         external/closed_list_factory
-        external/file_utility
-        external/utils/wall_timer       
+        external/utils/named_fstream
+        external/utils/wall_timer
+        external/utils/errors
 
     DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC PDBS MAS_HEURISTIC PLUGIN_COMPRESS_ASTAR PLUGIN_EXTERNAL_ASTAR PLUGIN_ASTAR_DDD
     DEPENDENCY_ONLY
