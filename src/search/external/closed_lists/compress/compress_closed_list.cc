@@ -49,7 +49,7 @@ namespace compress_closed_list {
         size_t external_closed_index = 0;
         size_t external_closed_bytes = 0; // total size in nodes of external table
 
-        size_t max_buffer_size_in_bytes = 4096; // 4kb
+        size_t max_buffer_size_in_bytes = 16384; // 16kb
         size_t max_buffer_entries;
 
         bool initialized = false; // lazy initialization
