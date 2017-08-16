@@ -2,6 +2,8 @@
 #define STATE_HASH_H
 
 #include <cstddef>
+#include <random>
+#include <limits>
 
 // Base class for hash functions that work on states
 
@@ -13,7 +15,10 @@ namespace statehash {
         virtual ~StateHash() {};
         // returns hash value
         virtual std::size_t operator()(const Entry& entry) const = 0;
-    };
+    };      
 }
+
+
+
 
 #endif
