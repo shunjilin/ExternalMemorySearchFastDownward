@@ -1,6 +1,8 @@
 #ifndef ZOBRIST_H
 #define ZOBRIST_H
 
+//#define TWISTED // optimization for twisted tabulation
+
 #include "../../globals.h"
 #include "../../utils/memory.h"
 
@@ -99,9 +101,18 @@ namespace statehash {
     template<class Entry>
     std::size_t ZobristHash<Entry>::operator()(const Entry& entry) const {
         std::size_t hash_value = 0;
+#ifdef TWISTED
+        std::size_t i = 0;
+        for (; i < table.size() - 1; ++i) {
+            hash_value ^= table[i][entry[i]];
+        }
+        
+        hash_value ^= table[i][(entry[i] ^ hash_value) % table[i].size()];
+#else
         for (std::size_t i = 0; i < table.size(); ++i) {
             hash_value ^= table[i][entry[i]];
         }
+#endif
         return hash_value;
     }
 }
