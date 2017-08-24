@@ -13,7 +13,6 @@
 #include <array>
 #include <algorithm>
 #include <memory>
-#include <iostream>
 
 #include "state_hash.h"
 
