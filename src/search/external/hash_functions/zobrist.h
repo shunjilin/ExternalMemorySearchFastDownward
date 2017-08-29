@@ -1,7 +1,7 @@
 #ifndef ZOBRIST_H
 #define ZOBRIST_H
 
-#define TWISTED // optimization for twisted tabulation
+//#define TWISTED // optimization for twisted tabulation
 
 #include "../../globals.h"
 #include "../../utils/memory.h"
