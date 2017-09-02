@@ -11,6 +11,7 @@
 #include "../../hash_functions/state_hash.h"
 #include "../../hash_functions/zobrist.h"
 #include "../../utils/errors.h"
+#include "../../utils/named_fstream.h"
 
 #include <vector>
 #include <memory>
@@ -49,7 +50,7 @@ namespace compress_closed_list {
         size_t external_closed_index = 0;
         size_t external_closed_bytes = 0; // total size in nodes of external table
 
-        size_t max_buffer_size_in_bytes = 16384; // 16kb
+        size_t max_buffer_size_in_bytes = BUFFER_BYTES; // 16kb
         size_t max_buffer_entries;
 
         bool initialized = false; // lazy initialization

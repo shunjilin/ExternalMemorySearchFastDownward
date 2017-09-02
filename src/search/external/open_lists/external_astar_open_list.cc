@@ -119,7 +119,7 @@ namespace external_astar_open_list {
         target_stream = nullptr;
         
         // Merge step
-        size_t buffer_entries = 4096 / Entry::get_size_in_bytes();
+        size_t buffer_entries = BUFFER_BYTES / Entry::get_size_in_bytes();
         auto k_value = k_offsets.size();
         vector< deque<Entry> > merge_buffers(k_value);
 

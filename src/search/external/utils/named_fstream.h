@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <vector>
 
-constexpr int BUFFER_SIZE = 16384; // 16kb
+constexpr int BUFFER_BYTES = 16384; // 16kb
 /*                                                                           \
 | Keeps file_names with their respective fstream for convenient destruction. |
 | Also provides custom size buffer.                                          |
@@ -16,7 +16,7 @@ using namespace std;
 
 class named_fstream : public fstream {
     string file_name;
-    vector<char> buffer = vector<char>(BUFFER_SIZE);
+    vector<char> buffer = vector<char>(BUFFER_BYTES);
  public:
     named_fstream() = default;
     named_fstream(const string file_name,
