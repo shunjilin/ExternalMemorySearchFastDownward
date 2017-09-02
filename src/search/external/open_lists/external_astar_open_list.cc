@@ -25,8 +25,9 @@
 #include <unistd.h>
 using namespace std;
 
-// TODO: How to check if unit cost and consistent heuristic?
-// TODO: Should throw error if non unit cost domain (perhaps in search engine)
+// #define TEST_EXTERNALASTAR_DDD
+
+// This only works on unit cost domains! Otherwise behavior is undefined.
 
 namespace external_astar_open_list {
     template<class Entry>
@@ -37,8 +38,6 @@ namespace external_astar_open_list {
         vector<Evaluator *> evaluators; // f, h
         void remove_duplicates(int f, int g);
         bool first_insert = true; // to initialize current_fg
-
-        unique_ptr<named_fstream> recursive_bucket; // for recursive expansion
 
         bool exists_bucket(int f, int g) const;
         void create_bucket(int f, int g);
@@ -69,8 +68,6 @@ namespace external_astar_open_list {
     {
         // create directory for open list files if not exist
         mkdir("open_list_buckets", 0744);
-        recursive_bucket = utils::make_unique_ptr<named_fstream>
-            (string("open_list_buckets/recursive.bucket"));
     }
 
     template<class Entry>
@@ -268,11 +265,6 @@ namespace external_astar_open_list {
         auto f = eval_context.get_heuristic_value_or_infinity(evaluators[0]);
         auto g = entry.get_g();
 
-        if (!first_insert && current_fg.first == f && current_fg.second == g) {
-            entry.write(*recursive_bucket);
-            return;
-        }
-
         if (!exists_bucket(f, g)) create_bucket(f, g);
         if (!entry.write(fg_buckets[f][g]))
             throw IOException("Fail to write state to fstream.");
@@ -290,13 +282,6 @@ namespace external_astar_open_list {
     Entry ExternalAStarOpenList<Entry>::remove_min() {
         
         Entry min_entry;
-
-        if (recursive_bucket->tellg() != 0) {
-            recursive_bucket->seekg(-Entry::get_size_in_bytes(), ios::cur);
-            min_entry.read(*recursive_bucket);
-            recursive_bucket->seekg(-Entry::get_size_in_bytes(), ios::cur);
-            return min_entry;
-        }
 
         int f, g;
         tie(f, g) = current_fg;
@@ -321,8 +306,7 @@ namespace external_astar_open_list {
             
             remove_duplicates(f, g);
 
-            // The following code is to test if vector is duplicate free
-            /*
+#ifdef TEST_EXTERNALASTAR_DDD
             vector<Entry> duplicate_vector;
             if (exists_bucket(f-1, g-1)) {
                 fg_buckets[f-1][g-1].clear();
@@ -358,14 +342,10 @@ namespace external_astar_open_list {
 
             fg_buckets[f][g].clear();
             fg_buckets[f][g].seekg(0, ios::beg);
-            */
+#endif
             if (fg_buckets[f][g].peek() == char_traits<char>::eof())
                 throw OpenListEmpty(); // no more entries
-            recursive_bucket.reset();
-            recursive_bucket =
-                utils::make_unique_ptr<named_fstream>
-                (string("open_list_buckets/recursive.bucket"));
-                
+                            
             return remove_min();
         }
 
