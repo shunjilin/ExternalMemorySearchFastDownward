@@ -48,6 +48,10 @@ create_external_astar_open_list_factory_and_f_eval(const options::Options& opts)
 
 extern std::tuple<std::shared_ptr<OpenListFactory>, Evaluator *>
 create_astar_ddd_open_list_factory_and_f_eval(const options::Options& opts);
+
+extern std::tuple<std::shared_ptr<OpenListFactory>,
+                  std::shared_ptr<ClosedListFactory>, Evaluator *>
+create_regular_factories_and_f_eval(const options::Options& opts);
  
 #else
 /*

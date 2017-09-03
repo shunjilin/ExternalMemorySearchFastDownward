@@ -114,7 +114,7 @@ fast_downward_plugin(
         external/utils/wall_timer
         external/utils/errors
 
-    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC PDBS MAS_HEURISTIC PLUGIN_COMPRESS_ASTAR PLUGIN_EXTERNAL_ASTAR PLUGIN_ASTAR_DDD
+    DEPENDS CAUSAL_GRAPH INT_PACKER ORDERED_SET SUCCESSOR_GENERATOR TASK_PROPERTIES BLIND_SEARCH_HEURISTIC PDBS MAS_HEURISTIC PLUGIN_COMPRESS_ASTAR PLUGIN_EXTERNAL_ASTAR PLUGIN_ASTAR_DDD PLUGIN_REGULAR_ASTAR
     DEPENDENCY_ONLY
 )
 
@@ -145,6 +145,15 @@ fast_downward_plugin(
     DEPENDS ASTAR_DDD_SEARCH EXTERNAL_SEARCH_COMMON
     DEPENDENCY_ONLY
  )
+
+fast_downward_plugin(
+    NAME PLUGIN_REGULAR_ASTAR
+    HELP "Regular A* search"
+    SOURCES
+        external/search_engines/plugin_regular_astar
+    DEPENDS EXTERNAL_REGULAR_SEARCH EXTERNAL_SEARCH_COMMON
+    DEPENDENCY_ONLY
+)
 
 fast_downward_plugin(
     NAME EXTERNAL_SEARCH_COMMON
@@ -183,6 +192,16 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME EXTERNAL_REGULAR_SEARCH
+    HELP "Lazy regular search algorithm"
+    SOURCES
+        external/search_engines/eager_search
+    DEPENDS NULL_PRUNING_METHOD ORDERED_SET SUCCESSOR_GENERATOR EXTERNAL_REGULAR_OPEN_LIST REGULAR_CLOSED_LIST
+    DEPENDENCY_ONLY
+)
+
+
+fast_downward_plugin(
     NAME EXTERNAL_TIEBREAKING_OPEN_LIST
     HELP "External tiebreaking open list"
     SOURCES
@@ -207,12 +226,29 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME EXTERNAL_REGULAR_OPEN_LIST
+    HELP "Regular tiebreaking open list"
+    SOURCES
+        external/open_lists/regular_tiebreaking_open_list
+    DEPENDENCY_ONLY
+)
+
+
+fast_downward_plugin(
     NAME COMPRESS_CLOSED_LIST
     HELP "Compress closed list"
     SOURCES
         external/closed_lists/compress/compress_closed_list
         external/closed_lists/compress/mapping_table
         external/closed_lists/compress/pointer_table
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME REGULAR_CLOSED_LIST
+    HELP "regular closed list"
+    SOURCES
+        external/closed_lists/regular_closed_list
     DEPENDENCY_ONLY
 )
 
