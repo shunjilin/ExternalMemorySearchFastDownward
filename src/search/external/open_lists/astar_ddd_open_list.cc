@@ -337,8 +337,6 @@ namespace astar_ddd_open_list {
     template<class Entry>
     vector<const GlobalOperator *> AStarDDDOpenList<Entry>::
     trace_path(const Entry &entry) {
-        // This is only works with unit cost domain (no zero cost actions)
-        // For zero cost actions, buckets with g and g-1 both have to be checked
         vector<const GlobalOperator *> path;
         Entry current_state = entry;
         
