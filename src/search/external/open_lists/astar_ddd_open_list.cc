@@ -59,6 +59,8 @@ namespace astar_ddd_open_list {
         string get_bucket_string(int bucket_index, BucketType bucket_type) const;
 
         void initialize();
+
+        size_t recursive_expansions = 0;
     protected:
         virtual void do_insertion(EvaluationContext &eval_context,
                                   const Entry &entry) override;
@@ -176,6 +178,7 @@ namespace astar_ddd_open_list {
         if (!first_insert &&
             eval_context.get_heuristic_value(evaluators[0]) <= min_f) {
             entry.write(*recursive_bucket);
+            ++recursive_expansions;
             return;
         }
         
@@ -255,6 +258,7 @@ namespace astar_ddd_open_list {
         closed_buckets.clear();
         // remove empty directory, this fails if directory is not empty
         rmdir("open_list_buckets");
+        cout << "number of recursive expansions: " << recursive_expansions << endl;
     }
 
     template<class Entry>
