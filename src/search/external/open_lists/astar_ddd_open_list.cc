@@ -22,6 +22,7 @@
 #include <set>
 #include <deque>
 #include <limits>
+#include <cmath> // for pow
 
 // for constructing directory
 #include <sys/types.h>
@@ -31,7 +32,7 @@
 #define TRANSPOSITION_TABLE // to prune recursive expansion duplicates
 #ifdef TRANSPOSITION_TABLE
 #include "transposition_table.h"
-const size_t TT_SIZE_IN_BYTES = 524288000; // 500 mb
+const size_t TT_SIZE_IN_BYTES = 900 * pow(1024, 2); // 900 mb
 #endif
 
 using namespace std;
@@ -118,6 +119,10 @@ namespace astar_ddd_open_list {
             create_bucket(i, BucketType::next);
             create_bucket(i, BucketType::closed);
         }
+
+        cout << "Number of hash buckets: " << n_buckets
+             << "\nMax size of transposition table in bytes: "
+             << TT_SIZE_IN_BYTES << "\n" << endl;
     }
 
     template<class Entry>
@@ -285,8 +290,8 @@ namespace astar_ddd_open_list {
         closed_buckets.clear();
         // remove empty directory, this fails if directory is not empty
         rmdir("open_list_buckets");
-        cout << "number of recursive expansions: " << recursive_expansions << "\n";
-        cout << "max bucket size in bytes is : " << max_bucket_size_in_bytes << endl;
+        cout << "Number of recursive expansions: " << recursive_expansions << "\n";
+        cout << "Max bucket size in bytes: " << max_bucket_size_in_bytes << endl;
     }
 
     template<class Entry>

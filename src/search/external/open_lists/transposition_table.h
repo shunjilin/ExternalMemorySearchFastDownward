@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <iostream>
 
 using namespace std;
 
@@ -31,10 +32,16 @@ void TranspositionTable<Entry>::clear() {
     table = vector<Entry>();
 }
 
+// return true if lower cost duplicate found in table according to hash value
+// if not found, insert new node, and evict existing node
 template<class Entry>
 bool TranspositionTable<Entry>::find_insert(Entry entry) {
     auto index = entry.get_hash_value() % max_entries;
     if (entry == table[index]) {
+        if (entry.get_g() < table[index].get_g()) {
+            table[index] = entry;
+            return false;
+        }   
         return true;
     }
     table[index] = entry;
