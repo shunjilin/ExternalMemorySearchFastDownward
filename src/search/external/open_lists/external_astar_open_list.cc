@@ -298,6 +298,7 @@ namespace external_astar_open_list {
                 // find lowest f
                 auto f_bucket = fg_buckets.begin();
                 while (f_bucket != fg_buckets.end() && f_bucket->first <= f) ++f_bucket;
+                if (f_bucket == fg_buckets.end()) throw OpenListEmpty();
                 f = f_bucket->first;
                 g = f_bucket->second.begin()->first;
             } else {
@@ -343,10 +344,7 @@ namespace external_astar_open_list {
 
             fg_buckets[f][g].clear();
             fg_buckets[f][g].seekg(0, ios::beg);
-#endif
-            if (fg_buckets[f][g].peek() == char_traits<char>::eof())
-                throw OpenListEmpty(); // no more entries
-                            
+#endif                      
             return remove_min();
         }
 
