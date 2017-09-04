@@ -45,7 +45,7 @@ namespace astar_ddd_open_list {
     template<class Entry>
     class AStarDDDOpenList : public OpenList<Entry> {
 
-        int n_buckets = 30; // tune outside?
+        int n_buckets = 20;
 
         bool reopen_closed;
         
