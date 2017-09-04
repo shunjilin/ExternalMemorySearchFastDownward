@@ -28,6 +28,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define TRANSPOSITION_TABLE // to prune recursive expansion duplicates
+#ifdef TRANSPOSITION_TABLE
+#include "transposition_table.h"
+const size_t TT_SIZE_IN_BYTES = 524288000; // 500 mb
+#endif
+
 using namespace std;
 using namespace statehash;
 
@@ -38,7 +44,7 @@ namespace astar_ddd_open_list {
     template<class Entry>
     class AStarDDDOpenList : public OpenList<Entry> {
 
-        int n_buckets = 10; // tune outside?
+        int n_buckets = 30; // tune outside?
 
         bool reopen_closed;
         
@@ -61,6 +67,11 @@ namespace astar_ddd_open_list {
         void initialize();
 
         size_t recursive_expansions = 0;
+        size_t max_bucket_size_in_bytes = 0;
+#ifdef TRANSPOSITION_TABLE
+        TranspositionTable<Entry> transposition_table =
+            TranspositionTable<Entry>(TT_SIZE_IN_BYTES);
+#endif
     protected:
         virtual void do_insertion(EvaluationContext &eval_context,
                                   const Entry &entry) override;
@@ -82,6 +93,9 @@ namespace astar_ddd_open_list {
     template<class Entry>
     void AStarDDDOpenList<Entry>::initialize() {
         Entry::initialize_hash_function(utils::make_unique_ptr<ZobristHash<Entry> >());
+#ifdef TRANSPOSITION_TABLE
+        transposition_table.initialize();
+#endif
     }
     
     template<class Entry>
@@ -130,6 +144,10 @@ namespace astar_ddd_open_list {
                 }
                 next_entry.read(*next_buckets[i]);
             }
+
+            size_t bucket_size_in_bytes = hash_table.size() * sizeof(Entry);
+            if (bucket_size_in_bytes > max_bucket_size_in_bytes)
+                max_bucket_size_in_bytes = bucket_size_in_bytes;
             next_buckets[i].reset(nullptr);
             create_bucket(i, BucketType::next);
             next_buckets[i]->clear();
@@ -177,6 +195,9 @@ namespace astar_ddd_open_list {
         assert(evaluators.size() == 1);
         if (!first_insert &&
             eval_context.get_heuristic_value(evaluators[0]) <= min_f) {
+#ifdef TRANSPOSITION_TABLE
+            if (transposition_table.find_insert(entry)) return;
+#endif
             entry.write(*recursive_bucket);
             ++recursive_expansions;
             return;
@@ -232,7 +253,13 @@ namespace astar_ddd_open_list {
             }
         }
         // exhausted all buckets
+#ifdef TRANSPOSITION_TABLE
+        transposition_table.clear();
+#endif
         remove_duplicates();
+#ifdef TRANSPOSITION_TABLE
+        transposition_table.initialize();
+#endif
         current_bucket = 0;
         recursive_bucket.reset(nullptr);
         recursive_bucket =
@@ -258,7 +285,8 @@ namespace astar_ddd_open_list {
         closed_buckets.clear();
         // remove empty directory, this fails if directory is not empty
         rmdir("open_list_buckets");
-        cout << "number of recursive expansions: " << recursive_expansions << endl;
+        cout << "number of recursive expansions: " << recursive_expansions << "\n";
+        cout << "max bucket size in bytes is : " << max_bucket_size_in_bytes << endl;
     }
 
     template<class Entry>
