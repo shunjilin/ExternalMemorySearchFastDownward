@@ -10,7 +10,8 @@ using namespace std;
 template<class Entry>
 class TranspositionTable {
     vector<Entry> table;
-    size_t max_entries;
+    size_t max_entries = 0;
+    size_t size_in_bytes;
 public:
     TranspositionTable(size_t size_in_bytes);
     void initialize();
@@ -20,10 +21,13 @@ public:
 
 template<class Entry>
 TranspositionTable<Entry>::TranspositionTable(size_t size_in_bytes) :
-    max_entries(size_in_bytes / Entry::get_size_in_bytes()) {}
+    size_in_bytes(size_in_bytes) {}
 
 template<class Entry>
 void TranspositionTable<Entry>::initialize() {
+    // lazy initialization
+    if (max_entries == 0) max_entries =
+                              size_in_bytes / Entry::get_size_in_bytes();
     table.resize(max_entries);
 }
 

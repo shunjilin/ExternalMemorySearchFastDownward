@@ -32,7 +32,7 @@
 #define TRANSPOSITION_TABLE // to prune recursive expansion duplicates
 #ifdef TRANSPOSITION_TABLE
 #include "transposition_table.h"
-const size_t TT_SIZE_IN_BYTES = 900 * pow(1024, 2); // 900 mb
+const size_t TT_SIZE_IN_BYTES = 100 * pow(1024, 2); // 900 mb
 #endif
 
 using namespace std;
@@ -122,7 +122,10 @@ namespace astar_ddd_open_list {
 
         cout << "Number of hash buckets: " << n_buckets
              << "\nMax size of transposition table in bytes: "
-             << TT_SIZE_IN_BYTES << "\n" << endl;
+#ifdef TRANSPOSITION_TABLE
+             << TT_SIZE_IN_BYTES
+#endif
+             << "\n" << endl;
     }
 
     template<class Entry>
