@@ -27,7 +27,7 @@ template<class Entry>
 void TranspositionTable<Entry>::initialize() {
     // lazy initialization
     if (max_entries == 0) max_entries =
-                              size_in_bytes / Entry::get_size_in_bytes();
+                              size_in_bytes / (sizeof(Entry) + Entry::get_packedState_bytes());
     table.resize(max_entries);
 }
 
