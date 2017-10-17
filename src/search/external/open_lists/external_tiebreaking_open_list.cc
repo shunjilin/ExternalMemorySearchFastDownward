@@ -18,6 +18,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#define EXTERNAL_ASTAR_TIEBREAKING
+
 using namespace std;
 
 namespace external_tiebreaking_open_list {
@@ -75,13 +78,19 @@ namespace external_tiebreaking_open_list {
     Entry ExternalTieBreakingOpenList<Entry>::remove_min() {
         assert(size > 0);
         Entry min_entry;
-
+        
         // tiebreak by lowest f value
         for (auto f_bucket = fg_buckets.begin();
              f_bucket != fg_buckets.end(); ++f_bucket) {
+#ifdef EXTERNAL_ASTAR_TIEBREAKING
+            // tiebreak by lowest g value
+            for (auto g_bucket = f_bucket->second.begin();
+                 g_bucket != f_bucket->second.end(); ++g_bucket) {
+#else
             // tiebreak by highest g value
             for (auto g_bucket = f_bucket->second.rbegin();
                  g_bucket != f_bucket->second.rend(); ++g_bucket) {
+#endif
                 //reverse seek
                 g_bucket->second.seekp(-Entry::get_size_in_bytes(), ios::cur);
                 
