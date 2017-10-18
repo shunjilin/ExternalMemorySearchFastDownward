@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define EXTERNAL_ASTAR_TIEBREAKING
+//#define EXTERNAL_ASTAR_TIEBREAKING
 
 using namespace std;
 
