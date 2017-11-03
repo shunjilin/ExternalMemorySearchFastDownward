@@ -29,11 +29,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define TRANSPOSITION_TABLE // to prune recursive expansion duplicates
+//#define TRANSPOSITION_TABLE // to prune recursive expansion duplicates
 #ifdef TRANSPOSITION_TABLE
 #include "transposition_table.h"
 const size_t TT_SIZE_IN_BYTES = 900 * pow(1024, 2); // 900 mb
 #endif
+
+//#define TEST_ASTAR_DDD
+
+#define FG_TIEBREAK // tie break on highest g as well
 
 using namespace std;
 using namespace statehash;
@@ -50,6 +54,9 @@ namespace astar_ddd_open_list {
         bool reopen_closed;
         
         int min_f = 0;
+#ifdef FG_TIEBREAK
+        int max_g = -1;
+#endif
         int next_f = numeric_limits<int>::max();
         vector<Evaluator *> evaluators; // f and g
         void remove_duplicates();
@@ -132,6 +139,9 @@ namespace astar_ddd_open_list {
     void AStarDDDOpenList<Entry>::
     remove_duplicates() {
         min_f = numeric_limits<int>::max();
+#ifdef FG_TIEBREAK
+        max_g = -1;
+#endif
         
         for (int i = 0; i < n_buckets; ++i) { // for each bucket
             unordered_set<Entry> hash_table;
@@ -185,12 +195,54 @@ namespace astar_ddd_open_list {
             for (auto& entry : hash_table) {
                 EvaluationContext eval_context(entry, false, nullptr);
                 int f = eval_context.get_heuristic_value(evaluators[0]);
-                if (f < min_f) min_f = f;
+                if (f < min_f) {
+                    min_f = f;
+#ifdef FG_TIEBREAK
+                    max_g = entry.get_g(); 
+#endif
+                }
+#ifdef FG_TIEBREAK
+                else if (f == min_f && entry.get_g() > max_g) {
+                    max_g = entry.get_g();
+                }
+#endif
                 entry.write(*open_buckets[i]);
             }
             // reset open
             open_buckets[i]->clear();
             open_buckets[i]->seekg(0, ios::beg);
+
+#ifdef TEST_ASTAR_DDD // test if duplicate free
+            unordered_set<Entry> test_table;
+            closed_buckets[i]->clear();
+            closed_buckets[i]->seekg(0, ios::beg);
+            //Entry closed_entry;
+            closed_entry.read(*closed_buckets[i]);
+            while (!closed_buckets[i]->eof()) {
+                auto it = test_table.find(closed_entry);
+                //if (it != test_table.end())
+                //  cout << "duplicate closed node!" << endl;
+                test_table.insert(closed_entry);
+                closed_entry.read(*closed_buckets[i]);
+            }
+            closed_buckets[i]->clear();
+            closed_buckets[i]->seekg(0, ios::end);
+            
+            open_buckets[i]->clear();
+            open_buckets[i]->seekg(0, ios::beg);
+            Entry open_entry;
+            open_entry.read(*open_buckets[i]);
+            while (!open_buckets[i]->eof()) {
+                auto it = test_table.find(open_entry);
+                if (it != test_table.end())
+                    cout << "duplicate open node!" << endl;
+                open_entry.read(*open_buckets[i]);
+            }
+            open_buckets[i]->clear();
+            open_buckets[i]->seekg(0, ios::beg);
+            
+#endif
+        
         }
         // No more entries
         if (min_f == numeric_limits<int>::max())
@@ -201,8 +253,14 @@ namespace astar_ddd_open_list {
     void AStarDDDOpenList<Entry>::
     do_insertion(EvaluationContext &eval_context, const Entry &entry) {
         assert(evaluators.size() == 1);
+#ifdef FG_TIEBREAK
+        if (!first_insert &&
+            eval_context.get_heuristic_value(evaluators[0]) == min_f &&
+            entry.get_g() == max_g) {
+#else
         if (!first_insert &&
             eval_context.get_heuristic_value(evaluators[0]) <= min_f) {
+#endif
 #ifdef TRANSPOSITION_TABLE
             if (transposition_table.find_insert(entry)) return;
 #endif
@@ -217,13 +275,15 @@ namespace astar_ddd_open_list {
             auto f = eval_context.get_heuristic_value_or_infinity(evaluators[0]);
             initialize();
             min_f = f;
+#ifdef FG_TIEBREAK
+            max_g = entry.get_g();
+#endif
             entry.write(*open_buckets[bucket_index]);
             open_buckets[bucket_index]->clear();
             open_buckets[bucket_index]->seekg(0, ios::beg);
             first_insert = false;
             return;
         }
-        
         
         if (!entry.write(*next_buckets[bucket_index]))
             throw IOException("Fail to write state to fstream.");
@@ -252,15 +312,21 @@ namespace astar_ddd_open_list {
            
             EvaluationContext eval_context(min_entry, false, nullptr);
             int entry_f = eval_context.get_heuristic_value(evaluators[0]);
+#ifdef FG_TIEBREAK
+            if (entry_f == min_f && min_entry.get_g() == max_g) {
+#else
             if (entry_f == min_f) {
+#endif
                 min_entry.write(*closed_buckets[current_bucket]);
                 return min_entry;
+
             } else {
                 // transfer unexpanded to next bucket
                 min_entry.write(*next_buckets[current_bucket]);
             }
         }
         // exhausted all buckets
+
 #ifdef TRANSPOSITION_TABLE
         transposition_table.clear();
 #endif
