@@ -43,6 +43,19 @@ This has only been tested on a linux system.
 The use of mmap in A*-IDD requires a POSIX-compliant operating system.     
 Requires boost/multiprecision/miller_rabin for primality testing in A*-IDD.
 
+## References
++ Burns, E. A.; Hatem, M.; Leighton, M. J.; and Ruml, W. 2012. Implementing
+fast heuristic search code. In Fifth Annual Symposium on
+Combinatorial Search.
++ Edelkamp, S.; Jabbar, S.; and Schrödl, S. 2004. External A*. KI 4:226–240.
++ Hatem, M. 2014. Heuristic search with limited memory. Ph.D. Dissertation,
+University of New Hampshire.
++ Korf, R. E. 1985. Depth-first iterative-deepening. Artificial Intelligence
+27(1):97 – 109.
++ Lin, S.; Fukunaga, A. 2018. Revisiting Immediate Duplicate Detection in
+External Memory Search. To appear in the 32nd
+AAAI Conference on Artificial Intelligence (AAAI-18).
+
 ## Original Fast Downward README
 Fast Downward is a domain-independent planning system.
 
@@ -68,16 +81,3 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>.
 ```
-
-## References
-+ Burns, E. A.; Hatem, M.; Leighton, M. J.; and Ruml, W. 2012. Implementing
-fast heuristic search code. In Fifth Annual Symposium on
-Combinatorial Search.
-+ Edelkamp, S.; Jabbar, S.; and Schrödl, S. 2004. External A*. KI 4:226–240.
-+ Hatem, M. 2014. Heuristic search with limited memory. Ph.D. Dissertation,
-University of New Hampshire.
-+ Korf, R. E. 1985. Depth-first iterative-deepening. Artificial Intelligence
-27(1):97 – 109.
-+ Lin, S.; Fukunaga, A. 2018. Revisiting Immediate Duplicate Detection in
-External Memory Search. To appear in the 32nd
-AAAI Conference on Artificial Intelligence (AAAI-18).
