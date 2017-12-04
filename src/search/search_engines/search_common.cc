@@ -14,8 +14,6 @@
 #include "../external/open_lists/external_astar_open_list.h"
 #include "../external/open_lists/astar_ddd_open_list.h"
 
-#include "../external/closed_lists/regular_closed_list.h"
-#include "../external/open_lists/regular_tiebreaking_open_list.h"
 #include <tuple>
 #else
 #include "../open_lists/alternation_open_list.h"
@@ -88,27 +86,6 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
                         AStarDDDOpenListFactory>(options);
         return make_tuple(open, f);
     }
-
-    tuple<shared_ptr<OpenListFactory>, shared_ptr<ClosedListFactory>, Evaluator *>
-    create_regular_factories_and_f_eval(const options::Options &opts) {
-            GEval *g = new GEval();
-            Evaluator *h = opts.get<Evaluator *>("eval");
-            Evaluator *f = new SumEval(vector<Evaluator *>({g, h}));
-            vector<Evaluator *> evals = {f, h};
-
-            Options options;
-            options.set("evals", evals);
-            shared_ptr<OpenListFactory> open =
-                make_shared<regular_tiebreaking_open_list::
-                            RegularTieBreakingOpenListFactory>(options);
-            
-            options.set("reopen_closed", opts.get<bool>("reopen_closed"));
-            shared_ptr<ClosedListFactory> closed =
-                make_shared<regular_closed_list::
-                            RegularClosedListFactory>(options);
-            return make_tuple(open, closed, f);
-    }
-    
     
 #else
     
