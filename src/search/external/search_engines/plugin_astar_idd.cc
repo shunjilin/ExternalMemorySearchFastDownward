@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace plugin_compress_astar {
+namespace plugin_astar_idd {
 static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
     parser.document_synopsis(
         "External A* search (lazy) with SSD using compress closed list",
@@ -39,5 +39,5 @@ static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
     return engine;
 }
 
-static PluginShared<SearchEngine> _plugin("compress_astar", _parse);
+static PluginShared<SearchEngine> _plugin("astar_idd", _parse);
 }
