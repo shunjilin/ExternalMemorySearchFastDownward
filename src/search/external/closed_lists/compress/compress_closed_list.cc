@@ -199,7 +199,7 @@ namespace compress_closed_list {
         // Then look in hash tables
         auto hash_value = entry.get_hash_value();
         auto probe_value = get_probe_value(hash_value);
-        auto ptr = internal_closed.hash_find(hash_value, probe_value);
+        auto ptr = internal_closed.get_ptr_with_hash(hash_value, probe_value);
         while (!internal_closed.ptr_is_invalid(ptr)) {
 
             // first check in partition table
@@ -222,7 +222,7 @@ namespace compress_closed_list {
             }
             // update pointer and resume while loop if partition values do not
             // match or if hash collision
-            ptr = internal_closed.hash_find(hash_value, probe_value, false);
+            ptr = internal_closed.get_ptr_with_hash(hash_value, probe_value, false);
         }
         buffers[partition_value].insert(entry);
         if (buffers[partition_value].size() == max_buffer_entries)
@@ -242,7 +242,7 @@ namespace compress_closed_list {
         for (auto& node : buffers[partition_value]) {
             write_external_at(node, external_closed_index);
             auto hash_value = node.get_hash_value();
-            internal_closed.hash_insert(external_closed_index,
+            internal_closed.insert_ptr_with_hash(external_closed_index,
                                         hash_value,
                                         get_probe_value(hash_value));
             
@@ -283,7 +283,7 @@ namespace compress_closed_list {
             // Then look in hash tables
             auto parent_hash_value = current_state.get_parent_hash_value();
             auto probe_value = get_probe_value(parent_hash_value);
-            auto ptr = internal_closed.hash_find(parent_hash_value, probe_value);
+            auto ptr = internal_closed.get_ptr_with_hash(parent_hash_value, probe_value);
             while (!internal_closed.ptr_is_invalid(ptr)) {
                 // read node from pointer
                 Entry node;
@@ -294,7 +294,7 @@ namespace compress_closed_list {
                 }
                 // update pointer and resume while loop if partition values do not
                 // match or if hash collision
-                ptr = internal_closed.hash_find(parent_hash_value,
+                ptr = internal_closed.get_ptr_with_hash(parent_hash_value,
                                                 probe_value,
                                                 false);
             }

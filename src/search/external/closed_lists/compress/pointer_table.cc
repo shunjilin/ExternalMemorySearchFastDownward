@@ -23,16 +23,16 @@ constexpr size_t size_t_bits = sizeof(size_t) * CHAR_BIT;
 // Note: bools in vectors take up 1 bit each
 // (max_entries * ptr_bits) == bits.size()
 
-PointerTable::PointerTable(size_t ptr_table_size_in_bytes)
+PointerTable::PointerTable(size_t ptr_table_size_limit_in_bytes)
 {
     utils::WallTimer timer;
-    size_t big_ptr_size_in_bits = get_ptr_size_in_bits(ptr_table_size_in_bytes);
+    size_t big_ptr_size_in_bits = get_ptr_size_in_bits(ptr_table_size_limit_in_bytes);
     
-    // need to check if size is optimal
+    // choose pointer that gives max table size in entries
     size_t small_ptr_size_in_bits =
         big_ptr_size_in_bits > 0 ? big_ptr_size_in_bits - 1 : 0;
     
-    size_t big_ptr_entries = ptr_table_size_in_bytes * 8 / big_ptr_size_in_bits;
+    size_t big_ptr_entries = ptr_table_size_limit_in_bytes * 8 / big_ptr_size_in_bits;
     size_t small_ptr_entries = pow(2, small_ptr_size_in_bits);
     
 #ifdef PRIME
@@ -62,7 +62,7 @@ PointerTable::PointerTable(size_t ptr_table_size_in_bytes)
     
     bit_vector.resize(ptr_size_in_bits * max_entries, true);
 
-    // all true within size of ptr
+    // invalid pointer representation: pointer with all bools set to true
     invalid_ptr = numeric_limits<size_t>::max() >> (size_t_bits - ptr_size_in_bits);
 
     // For logging purposes.
@@ -73,16 +73,15 @@ PointerTable::PointerTable(size_t ptr_table_size_in_bytes)
          << "Max entries of pointer table is: " << get_max_entries() << endl;
 }
 
-// Get the size of a pointer (in bits)  given the size of
-// the pointer table in bytes (upper limit).
+
 // Returns the biggest pointer size, may not be optimal in terms of size of
 // pointer table.
-size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const {
+size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_limit_in_bytes) const {
     size_t ptr_size_in_bits = 0;
     auto max_ptr_bits = size_t_bits;
     for (size_t ptr_sz = 0; ptr_sz < max_ptr_bits; ++ptr_sz) {
 	size_t total_ptr_table_bits = ptr_sz * pow(2, ptr_sz);
-	if (total_ptr_table_bits >= (ptr_table_size_in_bytes * CHAR_BIT)) {
+	if (total_ptr_table_bits >= (ptr_table_size_limit_in_bytes * CHAR_BIT)) {
 	    ptr_size_in_bits = ptr_sz;
 	    break;
 	}
@@ -90,8 +89,7 @@ size_t PointerTable::get_ptr_size_in_bits(size_t ptr_table_size_in_bytes) const 
     return ptr_size_in_bits;
 }
 
-// find takes an index and returns pointer value at that index
-size_t PointerTable::find(size_t index) const {
+size_t PointerTable::get_ptr_at_index(size_t index) const {
     size_t pointer = 0;
     size_t bit_index = index * ptr_size_in_bits; // actual offset
     for (size_t i = 0; i < ptr_size_in_bits; ++i) {
@@ -102,9 +100,7 @@ size_t PointerTable::find(size_t index) const {
     return pointer;
 }
 
-    
-// insert takes pointer and index and inserts pointer into the table
-void PointerTable::insert(size_t pointer, size_t index) {
+void PointerTable::insert_ptr_at_index(size_t pointer, size_t index) {
     if (get_n_entries() == get_max_entries())
         throw runtime_error("Attempting to insert in full pointer table");
     // go to last bit of the entry at index
@@ -122,19 +118,19 @@ bool PointerTable::ptr_is_invalid(size_t ptr) const {
     return ptr == invalid_ptr;
 }
 
-void PointerTable::hash_insert(size_t pointer,
+void PointerTable::insert_ptr_with_hash(size_t pointer,
                                size_t hash_value,
                                size_t probe_value) {
     auto max_entries = get_max_entries();
     size_t probe_index = hash_value % max_entries;
-    while (!ptr_is_invalid(find(probe_index))) {
+    while (!ptr_is_invalid(get_ptr_at_index(probe_index))) {
 	probe_index =
              (probe_index + (probe_value % max_entries)) % max_entries; 
     }
-    insert(pointer, probe_index);
+    insert_ptr_at_index(pointer, probe_index);
 }
 
-size_t PointerTable::hash_find(size_t hash_value,
+size_t PointerTable::get_ptr_with_hash(size_t hash_value,
                                size_t probe_value,
                                bool first_probe) const {
     auto max_entries = get_max_entries();
@@ -144,7 +140,7 @@ size_t PointerTable::hash_find(size_t hash_value,
         current_probe_index =
             (current_probe_index + (probe_value % max_entries)) % max_entries; 
     }
-    return find(current_probe_index);
+    return get_ptr_at_index(current_probe_index);
 }
 
 size_t PointerTable::get_n_entries() const {
