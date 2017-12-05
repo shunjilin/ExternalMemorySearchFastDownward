@@ -30,8 +30,7 @@ Same syntax as fast-downward. Compile the external search (64-bit) build by runn
 ```
 Example of A*-IDD with merge and shrink:
 ```
-./fast-downward.py --build=externalsearch64
-./downward-benchmarks/sokoban-opt11-strips/p01.pddl --search "astar_idd(merge_and_shrink(shrink_strategy=shrink_bisimulation(greedy=false), merge_strategy=merge_sccs(order_of_sccs=topological,merge_selector=score_based_filtering(scoring_functions=[goal_relevance,dfp,total_order])), label_reduction=exact(before_shrinking=true,before_merging=false),max_states=50000,threshold_before_merge=1))"
+./fast-downward.py --build=externalsearch64 ./downward-benchmarks/sokoban-opt11-strips/p01.pddl --search "astar_idd(merge_and_shrink(shrink_strategy=shrink_bisimulation(greedy=false), merge_strategy=merge_sccs(order_of_sccs=topological,merge_selector=score_based_filtering(scoring_functions=[goal_relevance,dfp,total_order])), label_reduction=exact(before_shrinking=true,before_merging=false),max_states=50000,threshold_before_merge=1))"
 ```
 + A*-DDD: astar_ddd  
 + External A*: external_astar
