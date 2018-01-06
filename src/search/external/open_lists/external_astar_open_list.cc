@@ -8,6 +8,7 @@
 
 #include "../utils/named_fstream.h"
 #include "../utils/errors.h"
+#include "../utils/compunits.h"
 
 #include "../../global_operator.h"
 #include "../../globals.h" // for g_operator
@@ -24,8 +25,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 using namespace std;
+using namespace compunits;
 
-const size_t MERGE_CHUNK_BYTES = 996147200; // 950 mb
+const size_t MERGE_CHUNK_BYTES = 900_MiB;
 // #define TEST_EXTERNALASTAR_DDD
 
 // This only works on unit cost domains! Otherwise behavior is undefined.

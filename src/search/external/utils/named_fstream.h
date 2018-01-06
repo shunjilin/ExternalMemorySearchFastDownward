@@ -6,7 +6,10 @@
 #include <cstdio>
 #include <vector>
 
-constexpr int BUFFER_BYTES = 16384; // 16kb
+#include "compunits.h"
+using namespace compunits;
+
+constexpr int BUFFER_BYTES = 16_KiB;
 /*                                                                           \
 | Keeps file_names with their respective fstream for convenient destruction. |
 | Also provides custom size buffer.                                          |

@@ -8,6 +8,7 @@
 
 #include "../utils/named_fstream.h"
 #include "../utils/errors.h"
+#include "../utils/compunits.h"
 
 #include "../../global_operator.h"
 #include "../../globals.h" // for g_operator
@@ -29,10 +30,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-//#define TRANSPOSITION_TABLE // to prune recursive expansion duplicates
+using namespace compunits;
+
+#define TRANSPOSITION_TABLE // to prune recursive expansion duplicates
 #ifdef TRANSPOSITION_TABLE
 #include "transposition_table.h"
-const size_t TT_SIZE_IN_BYTES = 900 * pow(1024, 2); // 900 mb
+const size_t TT_SIZE_IN_BYTES = 900_MiB;
 #endif
 
 //#define TEST_ASTAR_DDD
