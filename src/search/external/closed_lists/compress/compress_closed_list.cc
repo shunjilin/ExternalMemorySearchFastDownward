@@ -12,6 +12,7 @@
 #include "../../hash_functions/zobrist.h"
 #include "../../utils/errors.h"
 #include "../../utils/named_fstream.h"
+#include "../../utils/compunits.h"
 
 #include <vector>
 #include <memory>
@@ -26,6 +27,7 @@
 
 using namespace std;
 using namespace statehash;
+using namespace compunits;
 
 using found = bool;
 using reopened = bool;
@@ -44,7 +46,7 @@ namespace compress_closed_list {
         unique_ptr<StateHash<Entry> > partition_hash;
         unsigned n_partitions = 100;
        
-        PointerTable internal_closed;
+        PointerTable internal_closed = PointerTable(900_MiB);
         int external_closed_fd;
         char *external_closed;
         size_t external_closed_index = 0;
@@ -144,8 +146,7 @@ namespace compress_closed_list {
     CompressClosedList<Entry>::CompressClosedList(const Options &opts)
         : ClosedList<Entry>(opts.get<bool>("reopen_closed")),
         enable_partitioning(opts.get<bool>("enable_partitioning")),
-        double_hashing(opts.get<bool>("double_hashing")),
-        internal_closed(opts.get<double>("internal_closed_gb") * pow(1024, 3)) 
+        double_hashing(opts.get<bool>("double_hashing")) 
     {
         // For logging purposes.
         cout << "Using compress closed list ";
@@ -366,8 +367,6 @@ namespace compress_closed_list {
                                 "reopen closed nodes with lower g values");
         parser.add_option<bool>("enable_partitioning",
                                 "use partitioning table"); // TODO: set default
-        parser.add_option<double>("internal_closed_gb",
-                                  "internal_closed size in gb");
         Options opts = parser.parse();
         if (parser.dry_run())
             return nullptr;

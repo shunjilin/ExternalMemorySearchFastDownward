@@ -46,7 +46,6 @@ using WeightedEval = weighted_evaluator::WeightedEvaluator;
             
             options.set("reopen_closed", opts.get<bool>("reopen_closed"));
             options.set("enable_partitioning", true); // set this as user option?
-            options.set("internal_closed_gb", 0.9); // set this as user option?
             options.set("double_hashing", true); // set this as user option?
             shared_ptr<ClosedListFactory> closed =
                 make_shared<compress_closed_list::
